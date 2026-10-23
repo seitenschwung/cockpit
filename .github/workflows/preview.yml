@@ -1,0 +1,181 @@
+name: Preview
+
+# Optional job of a project's ci.yml (`uses: seitenschwung/template/.github/workflows/preview.yml@v1`,
+# after the pipeline job): shows what a pull request changes visually, without waiting for a deploy.
+#
+# The pipeline takes full-page screenshots of every page it tests (desktop and mobile).
+#  - On main: the desktop shots become the baseline (folder `main/` on the branch `pr-previews`).
+#  - On a PR: every page is compared with that baseline. One sticky comment shows only the pages
+#    that changed (before | after), at most 6; the rest is counted. Without a baseline yet it shows
+#    the start page. Mobile shots stay in the `screenshots` artifact of the run, they are not
+#    stored on the branch.
+#
+# Storage: JPEG q70, at most 4000 px high, and the branch `pr-previews` is rebuilt as ONE commit
+# every time (baseline, newest shots of each open PR; folders of closed PRs are dropped), so it
+# stays small. Raw image links only work in public repositories; in a private one the comment
+# links the workflow run instead.
+#
+# Runs no code from the repository: it checks out nothing and only handles the screenshots artifact.
+# Fork PRs are skipped (their token is read-only).
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    name: Screenshots (baseline / PR comment)
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: preview-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EVENT: ${{ github.event_name }}
+      PR: ${{ github.event.pull_request.number }}
+      SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      REPO: ${{ github.repository }}
+      MAX_SHOWN: "6"
+      MAX_HEIGHT: "4000"
+      DIFF_PIXELS: "200"
+    steps:
+      - name: Get the screenshots
+        id: get
+        uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: screenshots
+          path: shots
+
+      - name: Compare, publish, comment
+        if: steps.get.outcome == 'success'
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          command -v compare > /dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick; } > /dev/null
+          short="${SHA:0:7}"
+          run_url="${GITHUB_SERVER_URL}/${REPO}/actions/runs/${GITHUB_RUN_ID}"
+          public="$(gh api "repos/${REPO}" --jq '.private | not')"
+
+          # 1. Desktop shots as small JPEGs (names are checked: they come from the project's pages).
+          proc="$RUNNER_TEMP/proc"; mkdir -p "$proc"
+          for f in shots/desktop--*.png; do
+            name="$(basename "$f" .png)"; name="${name#desktop--}"
+            [[ "$name" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "Skipping odd file name"; continue; }
+            convert "$f" -gravity North -crop "100%x${MAX_HEIGHT}+0+0" +repage -strip -quality 70 "$proc/${name}.jpg"
+          done
+          pages=("$proc"/*.jpg)
+          [ "${#pages[@]}" -gt 0 ] || { echo "No desktop screenshots, nothing to do."; exit 0; }
+
+          # 2. The branch pr-previews as one commit. `rebuild` receives the work tree and changes it.
+          work="$(mktemp -d)"; git -C "$work" init -q
+          cd "$work"
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          publish() {   # publish "<message>" "<function that edits the tree>"
+            local lease commit
+            git fetch -q origin pr-previews 2>/dev/null && git checkout -q -f FETCH_HEAD || { git checkout -q -f --orphan pr-previews; git rm -rqf . 2>/dev/null || true; }
+            "$2"
+            git add -A
+            commit="$(git commit-tree "$(git write-tree)" -m "$1")"
+            lease="$(git rev-parse -q --verify FETCH_HEAD 2>/dev/null || true)"
+            git push -q --force-with-lease="pr-previews:${lease}" origin "${commit}:refs/heads/pr-previews"
+          }
+          retry() {
+            local a
+            for a in 1 2 3; do
+              "$@" && return 0
+              [ "$a" = 3 ] && return 1
+              echo "Push raced with another run, retrying …"; sleep $((a * 3))
+            done
+          }
+
+          if [ "$EVENT" != pull_request ]; then
+            # main: these shots are the new baseline
+            tree_main() { rm -rf main; mkdir -p main; cp "${pages[@]}" main/; }
+            retry publish "baseline: main @ ${short}" tree_main
+            echo "Baseline updated (${#pages[@]} pages)."
+            exit 0
+          fi
+
+          # 3. Pull request: which pages differ from the baseline?
+          git fetch -q origin pr-previews 2>/dev/null && git checkout -q -f FETCH_HEAD || true
+          have_baseline=false; [ -d main ] && have_baseline=true
+          changed=(); new=(); same=0
+          for p in "${pages[@]}"; do
+            n="$(basename "$p")"
+            if [ "$have_baseline" = true ] && [ -f "main/$n" ]; then
+              px="$(compare -metric AE -fuzz 3% "main/$n" "$p" null: 2>&1 || true)"
+              if [[ "$px" =~ ^[0-9]+$ ]] && [ "$px" -le "$DIFF_PIXELS" ]; then same=$((same + 1)); else changed+=("$n"); fi
+            elif [ "$have_baseline" = true ]; then new+=("$n")
+            fi
+          done
+          if [ "$have_baseline" = false ]; then   # nothing to compare with: show the start page
+            [ -f "$proc/home.jpg" ] && show=("home.jpg") || show=("$(basename "${pages[0]}")")
+          else
+            show=("${changed[@]}" "${new[@]}")
+          fi
+          total_show="${#show[@]}"
+          show=("${show[@]:0:MAX_SHOWN}")
+
+          tree_pr() {
+            git rm -rqf --ignore-unmatch "pr-${PR}" 2>/dev/null || true
+            if [ "${#show[@]}" -gt 0 ]; then
+              mkdir -p "pr-${PR}/${short}"
+              for n in "${show[@]}"; do cp "$proc/$n" "pr-${PR}/${short}/"; done
+            fi
+            local d num state
+            for d in pr-*; do   # drop folders of PRs that are no longer open
+              [ -d "$d" ] || continue
+              num="${d#pr-}"; [ "$num" = "$PR" ] && continue
+              state="$(gh api "repos/${REPO}/pulls/${num}" --jq .state 2>/dev/null || echo open)"
+              [ "$state" = open ] || git rm -rqf "$d"
+            done
+          }
+          [ "$public" = true ] && { retry publish "previews: PR ${PR} @ ${short}" tree_pr || { echo "::error::Could not publish the screenshots"; exit 1; }; }
+
+          # 4. One sticky comment.
+          base="https://raw.githubusercontent.com/${REPO}/pr-previews"
+          {
+            echo "<!-- pr-preview -->"
+            echo "### 📸 Preview of \`${short}\`"
+            echo
+            if [ "$public" != true ]; then
+              echo "Private repository: the images can't be shown here. Download the \`screenshots\` artifact of [this run](${run_url})."
+            elif [ "$have_baseline" = false ]; then
+              echo "No baseline of \`main\` yet (it is created by the next push to main), so this shows the start page only."
+              echo
+              echo "<img src=\"${base}/pr-${PR}/${short}/${show[0]}\" width=\"480\">"
+            elif [ "$total_show" -eq 0 ]; then
+              echo "No visual change on the ${same} checked page(s) compared with \`main\`."
+            else
+              echo "Desktop, compared with \`main\`: **${#changed[@]} changed**, ${#new[@]} new, ${same} unchanged."
+              echo
+              echo "| Page | Before (main) | After |"
+              echo "|---|---|---|"
+              for n in "${show[@]}"; do
+                page="${n%.jpg}"
+                if [ -f "main/$n" ]; then before="<img src=\"${base}/main/${n}\" width=\"300\">"; else before="new page"; fi
+                echo "| \`${page//_//}\` | ${before} | <img src=\"${base}/pr-${PR}/${short}/${n}\" width=\"300\"> |"
+              done
+              [ "$total_show" -le "$MAX_SHOWN" ] || { echo; echo "…and $((total_show - MAX_SHOWN)) more changed page(s)."; }
+            fi
+            echo
+            echo "<sub>Mobile and all pages: \`screenshots\` artifact of the [workflow run](${run_url})</sub>"
+          } > "$RUNNER_TEMP/comment.md"
+
+          id="$(gh api --paginate "repos/${REPO}/issues/${PR}/comments" --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- pr-preview -->"))) | .id' | head -n1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${id}" -F "body=@${RUNNER_TEMP}/comment.md" > /dev/null
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR}/comments" -F "body=@${RUNNER_TEMP}/comment.md" > /dev/null
+          fi
+          echo "Commented on #${PR}: ${#changed[@]} changed, ${#new[@]} new, ${same} same"

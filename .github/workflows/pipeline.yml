@@ -1,0 +1,528 @@
+name: Pipeline
+
+# The shared pipeline of every project made from this template. Projects don't copy it, their
+# .github/workflows/ci.yml calls it (`uses: seitenschwung/template/.github/workflows/pipeline.yml@v1`),
+# so a fix here reaches all projects by moving the tag. Triggers live in the caller.
+#
+# Every push to main and every pull request: checks, then the Docker image tested hardened and
+# in real browsers. On main additionally: publish exactly that image and deploy it to Coolify.
+#
+# The owner manages this file and the caller. The bot that writes the code can't change workflow
+# files, so it can't weaken these checks or change what runs with the deploy secrets. That is why
+# the browser tests and the deploy steps live here and not in the project.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: app:ci
+
+jobs:
+  checks:
+    name: Lint, tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: No Node project
+        if: hashFiles('package-lock.json') == ''
+        run: echo "No package-lock.json, nothing to check here."
+      - uses: actions/setup-node@v7
+        if: hashFiles('package-lock.json') != ''
+        with:
+          node-version: 22
+          cache: npm
+      - if: hashFiles('package-lock.json') != ''
+        run: npm ci --no-audit --no-fund
+      - if: hashFiles('package-lock.json') != ''
+        run: npm run lint --if-present
+      - if: hashFiles('package-lock.json') != ''
+        run: npm test --if-present
+      - if: hashFiles('package-lock.json') != ''
+        run: npm run build --if-present
+
+  image:
+    name: Docker image + browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      built: ${{ steps.has.outputs.dockerfile }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Dockerfile present?
+        id: has
+        run: |
+          if [ -f Dockerfile ]; then echo "dockerfile=true" >> "$GITHUB_OUTPUT"
+          else echo "dockerfile=false" >> "$GITHUB_OUTPUT"; echo "No Dockerfile yet, nothing to build or deploy."; fi
+
+      # Stack-agnostic tests: a Dockerfile can define a stage named "test" (lint, unit tests).
+      # A failing stage fails the pipeline. The final image does not contain it.
+      - name: Tests (Dockerfile stage "test")
+        if: steps.has.outputs.dockerfile == 'true'
+        run: |
+          if grep -qiE '^FROM[[:space:]]+[^[:space:]]+[[:space:]]+AS[[:space:]]+test[[:space:]]*$' Dockerfile; then
+            docker build --target test --build-arg APP_VERSION="${GITHUB_SHA}" .
+          else
+            echo "No stage named test in the Dockerfile."
+          fi
+      - name: Build
+        if: steps.has.outputs.dockerfile == 'true'
+        run: docker build --build-arg APP_VERSION="${GITHUB_SHA}" -t "$IMAGE" .
+      - name: Runs as non-root
+        if: steps.has.outputs.dockerfile == 'true'
+        run: |
+          user="$(docker image inspect -f '{{.Config.User}}' "$IMAGE")"
+          case "${user%%:*}" in
+            ""|root|0) echo "::error::The image runs as root. Add a USER line with a non-root user to the Dockerfile."; exit 1 ;;
+          esac
+          echo "Runs as ${user}"
+      # Same limits as docker-compose.yml: read-only, no capabilities, only /tmp writable.
+      - name: Start hardened
+        if: steps.has.outputs.dockerfile == 'true'
+        run: |
+          docker run -d --name app --read-only \
+            --tmpfs /tmp:size=64m,mode=1777,noexec,nosuid,nodev \
+            --cap-drop ALL --security-opt no-new-privileges:true --pids-limit 200 --memory 256m \
+            -p 8080:8080 "$IMAGE"
+          for _ in $(seq 1 60); do curl -fsS http://127.0.0.1:8080/healthz > /dev/null && exit 0; sleep 1; done
+          echo "::error::No 200 from /healthz on port 8080 within 60 s"
+          docker logs app; exit 1
+      - name: Contract (/healthz, /version.txt)
+        id: contract
+        if: steps.has.outputs.dockerfile == 'true'
+        run: |
+          base=http://127.0.0.1:8080
+          version="$(curl -fsS "$base/version.txt" | tr -d '[:space:]')"
+          if [ "$version" != "${GITHUB_SHA}" ]; then
+            echo "::error::/version.txt must return the build argument APP_VERSION (${GITHUB_SHA}), got '${version:0:60}'"; exit 1
+          fi
+          type="$(curl -sS -o /dev/null -w '%{content_type}' "$base/")"
+          if [[ "$type" == text/html* ]]; then echo "html=true" >> "$GITHUB_OUTPUT"; else echo "html=false" >> "$GITHUB_OUTPUT"; fi
+          echo "ok: healthz, version ${version}, / is ${type:-no content type}"
+
+      # Real browsers against exactly this image. The tests check behaviour, not content, so
+      # they keep working when the site changes. Switch off with the repository variable
+      # BROWSER_TESTS=off for a project without a web UI.
+      - name: Write browser tests
+        if: steps.contract.outputs.html == 'true' && vars.BROWSER_TESTS != 'off'
+        run: |
+          mkdir -p "$RUNNER_TEMP/e2e" && cd "$RUNNER_TEMP/e2e"
+          cat > playwright.config.mjs <<'EOF'
+          import { defineConfig, devices } from '@playwright/test';
+          export default defineConfig({
+            testDir: '.',
+            timeout: 90_000,
+            retries: 1,
+            reporter: [['list'], ['html', { open: 'never', outputFolder: 'report' }]],
+            outputDir: 'results',
+            use: { baseURL: process.env.BASE_URL, screenshot: 'only-on-failure', trace: 'retain-on-failure' },
+            projects: [
+              { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+              { name: 'mobile', use: { ...devices['Pixel 7'] } },
+            ],
+          });
+          EOF
+          cat > site.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+          import AxeBuilder from '@axe-core/playwright';
+          import { mkdirSync } from 'node:fs';
+
+          const ORIGIN = new URL(process.env.BASE_URL).origin;
+          const MAX_PAGES = 25;
+
+          function watch(page) {
+            const problems = [];
+            page.on('console', (m) => { if (m.type() === 'error') problems.push(`console error: ${m.text()}`); });
+            page.on('pageerror', (e) => problems.push(`uncaught exception: ${e.message}`));
+            page.on('requestfailed', (r) => {
+              const why = r.failure()?.errorText ?? '';
+              if (!/ERR_ABORTED/.test(why)) problems.push(`request failed: ${r.url()} (${why})`);
+            });
+            page.on('response', (r) => {
+              if (r.status() >= 400 && new URL(r.url()).origin === ORIGIN) problems.push(`HTTP ${r.status()}: ${r.url()}`);
+            });
+            return problems;
+          }
+
+          async function scrollThrough(page) {
+            for (let i = 0; i < 60; i++) {
+              const atEnd = await page.evaluate(() => innerHeight + scrollY >= document.documentElement.scrollHeight - 2);
+              if (atEnd) break;
+              await page.mouse.wheel(0, 500);
+              await page.waitForTimeout(120);
+            }
+            await page.waitForTimeout(500);
+          }
+
+          async function checkPage(page, path, testInfo) {
+            const problems = watch(page);
+            const res = await page.goto(path, { waitUntil: 'load' });
+            expect.soft(res?.status(), `${path} status`).toBe(200);
+            await page.waitForLoadState('networkidle').catch(() => {});
+
+            await expect.soft(page, `${path} has a title`).toHaveTitle(/\S/);
+            expect.soft(await page.getAttribute('html', 'lang'), `${path} <html lang>`).toBeTruthy();
+            expect.soft(await page.locator('meta[name="viewport"]').count(), `${path} viewport meta`).toBe(1);
+
+            await testInfo.attach(`${path} top`, { body: await page.screenshot(), contentType: 'image/png' });
+            await scrollThrough(page);
+
+            // Full-page shot for the PR preview comment (see preview.yml), one per viewport and page.
+            mkdirSync('shots', { recursive: true });
+            const slug = path === '/' ? 'home' : path.replace(/^\/|\/$/g, '').replace(/[^A-Za-z0-9._-]+/g, '_');
+            await page.screenshot({ path: `shots/${testInfo.project.name}--${slug}.png`, fullPage: true }).catch(() => {});
+
+            const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+            expect.soft(overflow, `${path} horizontal overflow in px`).toBeLessThanOrEqual(1);
+
+            const broken = await page.$$eval('img', (imgs) => imgs
+              .filter((i) => (i.getAttribute('src') || i.getAttribute('srcset')) && i.complete && i.naturalWidth === 0)
+              .map((i) => i.currentSrc || i.src));
+            expect.soft(broken, `${path} broken images`).toEqual([]);
+
+            // Accessibility: WCAG 2.x A/AA, serious and critical findings fail
+            const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+            const bad = axe.violations.filter((v) => ['serious', 'critical'].includes(v.impact));
+            expect.soft(bad.map((v) => `${v.id}: ${v.help} (${v.nodes.length}x) ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`), `${path} accessibility`).toEqual([]);
+
+            expect.soft(problems, `${path} runtime problems`).toEqual([]);
+            return page.$$eval('a[href]', (as) => as.map((a) => a.href));
+          }
+
+          test('all pages: load cleanly, fit the screen, accessible', async ({ page }, testInfo) => {
+            const seen = new Set();
+            const queue = ['/'];
+            while (queue.length && seen.size < MAX_PAGES) {
+              const path = queue.shift();
+              if (seen.has(path)) continue;
+              seen.add(path);
+              for (const href of await checkPage(page, path, testInfo)) {
+                const u = new URL(href);
+                if (u.origin === ORIGIN && !seen.has(u.pathname) && !/\.(pdf|zip|jpe?g|png|webp|avif|gif|svg|mp4|webm|txt|xml|json)$/i.test(u.pathname)) queue.push(u.pathname);
+              }
+            }
+            console.log(`checked ${seen.size} page(s): ${[...seen].join(', ')}`);
+          });
+          EOF
+          cat > lighthouse-check.mjs <<'EOF'
+          // Fails below the minimum scores. Performance is only reported: a shared CI runner
+          // says little about real devices.
+          import { readFileSync } from 'node:fs';
+          const min = { accessibility: 0.9, 'best-practices': 0.9, seo: 0.9 };
+          const { categories } = JSON.parse(readFileSync('lighthouse/report.report.json', 'utf8'));
+          let failed = false;
+          for (const [id, c] of Object.entries(categories)) {
+            const score = Math.round(c.score * 100);
+            const need = min[id];
+            const ok = need === undefined || c.score >= need;
+            console.log(`${ok ? 'ok  ' : 'FAIL'} ${c.title}: ${score}${need ? ` (min ${need * 100})` : ' (info)'}`);
+            if (!ok) { failed = true; console.log(`::error::Lighthouse ${c.title} ${score} < ${need * 100}`); }
+          }
+          process.exit(failed ? 1 : 0);
+          EOF
+      - name: Browser tests (Playwright + axe, desktop and mobile) and Lighthouse
+        if: steps.contract.outputs.html == 'true' && vars.BROWSER_TESTS != 'off'
+        run: |
+          docker run --rm --ipc=host --network host -v "$RUNNER_TEMP/e2e:/e2e" -w /e2e \
+            -e CI=true -e BASE_URL=http://127.0.0.1:8080 \
+            mcr.microsoft.com/playwright:v1.63.0-noble sh -c '
+              set -e
+              npm init -y > /dev/null
+              npm install --no-audit --no-fund --loglevel=error @playwright/test@1.63.0 @axe-core/playwright@4.13.0 lighthouse@13.5.0
+              status=0
+              npx playwright test || status=1
+              mkdir -p lighthouse
+              chrome="$(node -e "import(\"@playwright/test\").then(m => console.log(m.chromium.executablePath()))")"
+              CHROME_PATH="$chrome" npx lighthouse "$BASE_URL/" --quiet \
+                --chrome-flags="--headless=new --no-sandbox" \
+                --only-categories=performance,accessibility,best-practices,seo \
+                --output=json --output=html --output-path=./lighthouse/report
+              node lighthouse-check.mjs || status=1
+              exit $status'
+      - uses: actions/upload-artifact@v7
+        if: always() && steps.contract.outputs.html == 'true' && vars.BROWSER_TESTS != 'off'
+        with:
+          name: browser-tests
+          path: |
+            ${{ runner.temp }}/e2e/report/
+            ${{ runner.temp }}/e2e/results/
+            ${{ runner.temp }}/e2e/lighthouse/
+          retention-days: 14
+          if-no-files-found: ignore
+      # Full-page screenshots of every checked page (desktop and mobile), for preview.yml: PRs are compared
+      # with the desktop shots of main.
+      - uses: actions/upload-artifact@v7
+        if: always() && (github.event_name == 'pull_request' || github.ref == 'refs/heads/main') && steps.contract.outputs.html == 'true' && vars.BROWSER_TESTS != 'off'
+        with:
+          name: screenshots
+          path: ${{ runner.temp }}/e2e/shots/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Container logs
+        if: always() && steps.has.outputs.dockerfile == 'true'
+        run: docker logs app 2>&1 | tail -50 || true
+
+      # Exactly this tested image goes to production.
+      - name: Hand the tested image to the publish job
+        if: success() && steps.has.outputs.dockerfile == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        run: docker save "$IMAGE" | gzip > image.tar.gz
+      - uses: actions/upload-artifact@v7
+        if: success() && steps.has.outputs.dockerfile == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        with:
+          name: tested-image
+          path: image.tar.gz
+          retention-days: 1
+
+  # Only on main and only after every check: pushes the tested image (not a rebuild) to the
+  # GitHub container registry, tagged with its commit. Runs no code from the repository.
+  publish:
+    name: Publish image
+    needs: [checks, image]
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && needs.image.outputs.built == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: tested-image
+      - name: Push it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gunzip -c image.tar.gz | docker load
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
+          for tag in "${GITHUB_SHA}" main; do
+            docker tag "$IMAGE" "${image}:${tag}"
+            docker push -q "${image}:${tag}"
+          done
+          docker logout ghcr.io
+          echo "Published ${image}:${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+
+  # Runs for projects that opted in: the repository variable DEPLOY=auto (`dev` sets it for new
+  # projects, the Coolify project and app are then created here) or, for older projects, a set
+  # COOLIFY_APP_UUID. Anything else stays green without deploying. Checks out nothing: every
+  # command that sees the deploy secrets is written in this file.
+  deploy:
+    name: Deploy (Coolify)
+    needs: [publish]
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && (vars.DEPLOY == 'auto' || vars.COOLIFY_APP_UUID != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      COOLIFY_URL: ${{ vars.COOLIFY_URL || secrets.COOLIFY_URL }}
+      COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+      # Set for older projects with a hand-made Coolify app. Otherwise the app is found or created
+      # by name below, and its UUID and URL are exported as COOLIFY_APP_UUID / APP_URL.
+      CFG_APP_UUID: ${{ vars.COOLIFY_APP_UUID }}
+      CFG_APP_URL: ${{ vars.APP_URL || secrets.APP_URL }}
+      BASE_DOMAIN: ${{ vars.BASE_DOMAIN || 'seitenschwung.com' }}
+      COOLIFY_SERVER_UUID: ${{ vars.COOLIFY_SERVER_UUID }}
+    steps:
+      - name: Check configuration
+        run: |
+          missing=0
+          for name in COOLIFY_URL COOLIFY_TOKEN; do
+            if [ -z "${!name}" ]; then echo "::error::$name is not set (organisation secret/variable, or environment \"production\")"; missing=1; fi
+          done
+          if [ -n "$CFG_APP_UUID" ] && [ -z "$CFG_APP_URL" ]; then echo "::error::COOLIFY_APP_UUID is set but APP_URL is not"; missing=1; fi
+          exit $missing
+
+      - name: Join tailnet
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Check tailnet and Coolify
+        run: |
+          if ! tailscale status --json | jq -e '.BackendState == "Running"' > /dev/null; then
+            echo "::error::Not connected to the tailnet. Check the OAuth client (auth_keys scope, tag tag:ci), tagOwners for tag:ci, and TS_OAUTH_CLIENT_ID / TS_OAUTH_SECRET."
+            exit 1
+          fi
+          for i in 1 2 3 4 5; do
+            curl -sS --fail --max-time 15 "${COOLIFY_URL%/}/api/health" && exit 0
+            echo "Coolify not reachable yet (attempt $i), retrying …"; sleep 5
+          done
+          echo "::error::Coolify not reachable at ${COOLIFY_URL}. Is MagicDNS on, and may tag:ci reach it in the access policy?"
+          exit 1
+
+      # The project is named like the repository: one Coolify project with one app per site.
+      # Looked up by name on every run, so nothing has to be stored in the repository settings.
+      - name: Find or create the Coolify app
+        run: |
+          set -uo pipefail
+          if [ -n "$CFG_APP_UUID" ]; then
+            echo "COOLIFY_APP_UUID=${CFG_APP_UUID}" >> "$GITHUB_ENV"; echo "APP_URL=${CFG_APP_URL}" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          NAME="${GITHUB_REPOSITORY#*/}"; NAME="${NAME,,}"
+          URL="https://${NAME}.${BASE_DOMAIN}"
+          BASE="${COOLIFY_URL%/}/api/v1"
+          WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+          ( umask 077; printf 'Authorization: Bearer %s\n' "$COOLIFY_TOKEN" > "$WORK/auth" )
+          coolify() {   # coolify METHOD PATH [JSON] -> HTTP status, body in $WORK/body
+            local args=(-sS -o "$WORK/body" -w '%{http_code}' --max-time 30 -X "$1" -H "@$WORK/auth" -H 'Accept: application/json')
+            [ $# -ge 3 ] && args+=(-H 'Content-Type: application/json' --data "$3")
+            curl "${args[@]}" "${BASE}$2" || echo 000
+          }
+          ok() { [ "${1:0:1}" = 2 ]; }
+          fail() { echo "::error::$*"; echo "❌ $*" >> "$GITHUB_STEP_SUMMARY"; exit 1; }
+
+          code=$(coolify GET /applications); ok "$code" || fail "Could not list Coolify applications (HTTP $code)"
+          uuid="$(jq -r --arg n "$NAME" '[.[] | select(.name == $n)][0].uuid // empty' "$WORK/body")"
+          if [ -n "$uuid" ]; then
+            echo "Coolify app ${NAME} exists (${uuid})"
+          else
+            server="$COOLIFY_SERVER_UUID"
+            if [ -z "$server" ]; then
+              code=$(coolify GET /servers); ok "$code" || fail "Could not list Coolify servers (HTTP $code)"
+              [ "$(jq 'length' "$WORK/body")" = 1 ] || fail "Coolify has more than one server: set the organisation variable COOLIFY_SERVER_UUID"
+              server="$(jq -r '.[0].uuid' "$WORK/body")"
+            fi
+            code=$(coolify GET /projects); ok "$code" || fail "Could not list Coolify projects (HTTP $code)"
+            project="$(jq -r --arg n "$NAME" '[.[] | select(.name == $n)][0].uuid // empty' "$WORK/body")"
+            if [ -z "$project" ]; then
+              code=$(coolify POST /projects "$(jq -cn --arg n "$NAME" --arg d "GitHub repository ${GITHUB_REPOSITORY}" '{name: $n, description: $d}')")
+              ok "$code" || fail "Could not create the Coolify project (HTTP $code): $(head -c 300 "$WORK/body")"
+              project="$(jq -r '.uuid' "$WORK/body")"
+            fi
+            body="$(jq -cn --arg n "$NAME" --arg p "$project" --arg s "$server" --arg r "https://github.com/${GITHUB_REPOSITORY}" \
+              --arg b "${GITHUB_REF_NAME}" --arg d "${URL}:8080" '{
+                project_uuid: $p, server_uuid: $s, environment_name: "production", name: $n,
+                git_repository: $r, git_branch: $b, build_pack: "dockercompose", ports_exposes: "8080",
+                docker_compose_location: "/docker-compose.yml", is_auto_deploy_enabled: false, instant_deploy: false,
+                docker_compose_domains: [{name: "web", domain: $d}]}')"
+            code=$(coolify POST /applications/public "$body")
+            ok "$code" || fail "Could not create the Coolify app (HTTP $code): $(head -c 400 "$WORK/body")"
+            uuid="$(jq -r '.uuid' "$WORK/body")"
+            echo "Created Coolify project and app ${NAME} (${uuid})"
+            echo "🆕 Created the Coolify project \`${NAME}\` with its app, domain ${URL}" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "COOLIFY_APP_UUID=${uuid}" >> "$GITHUB_ENV"; echo "APP_URL=${URL}" >> "$GITHUB_ENV"
+
+      - name: Write the deploy script
+        run: |
+          cat > "$RUNNER_TEMP/deploy.sh" <<'EOF'
+          #!/usr/bin/env bash
+          # deploy.sh <commit-sha>: point Coolify at that image, deploy, prove it runs.
+          set -uo pipefail
+          TAG="${1:?usage: deploy.sh <commit-sha>}"
+          BASE="${COOLIFY_URL%/}/api/v1"
+          APP="${APP_URL%/}"
+          REF="ghcr.io/${GITHUB_REPOSITORY,,}:${TAG}"
+          WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
+          # The token goes to curl from a file, not on the command line.
+          ( umask 077; printf 'Authorization: Bearer %s\n' "$COOLIFY_TOKEN" > "$WORK/auth" )
+          summary() { echo "$*" >> "$GITHUB_STEP_SUMMARY"; }
+          error() { echo "::error::$*"; summary "❌ $*"; }
+          coolify() {   # coolify METHOD PATH [JSON] -> HTTP status, body in $WORK/body
+            local args=(-sS -o "$WORK/body" -w '%{http_code}' --max-time 30 -X "$1" -H "@$WORK/auth" -H 'Accept: application/json')
+            [ $# -ge 3 ] && args+=(-H 'Content-Type: application/json' --data "$3")
+            curl "${args[@]}" "${BASE}$2" || echo 000
+          }
+          ok() { [ "${1:0:1}" = 2 ]; }
+          print_log() {   # Coolify's deployment log as plain text, never read as workflow commands
+            local stop; stop="$(openssl rand -hex 16)"
+            echo "::group::Coolify deployment log (end)"; echo "::stop-commands::${stop}"
+            jq -r '(.logs // "[]") | (fromjson? // []) | .[-120:][] | .output // empty' "$WORK/body" 2>/dev/null || head -c 4000 "$WORK/body"
+            echo "::${stop}::"; echo "::endgroup::"
+          }
+
+          summary "### Deployment \`${TAG:0:12}\`"
+          # 1. Which image (docker-compose.yml runs ${IMAGE}), and the compose file of the same commit.
+          env_json="$(jq -cn --arg v "$REF" '{key: "IMAGE", value: $v}')"
+          code=$(coolify PATCH "/applications/${COOLIFY_APP_UUID}/envs" "$env_json")
+          [ "$code" = 404 ] && code=$(coolify POST "/applications/${COOLIFY_APP_UUID}/envs" "$env_json")
+          ok "$code" || { error "Could not set IMAGE in Coolify (HTTP $code): $(head -c 300 "$WORK/body")"; exit 1; }
+          code=$(coolify PATCH "/applications/${COOLIFY_APP_UUID}" "$(jq -cn --arg v "$TAG" '{git_commit_sha: $v}')")
+          ok "$code" || echo "::warning::Could not pin the commit in Coolify (HTTP $code), the compose file may come from the branch head."
+
+          # 2. Deploy and follow it.
+          for method in POST GET; do
+            code=$(coolify "$method" "/deploy?uuid=${COOLIFY_APP_UUID}&force=false")
+            [ "$code" = 405 ] || break
+          done
+          ok "$code" || { error "Coolify refused the deployment (HTTP $code): $(head -c 300 "$WORK/body")"; exit 1; }
+          deployment="$(jq -r '.deployments[0].deployment_uuid // empty' "$WORK/body")"
+          [ -n "$deployment" ] || { error "Coolify answered without a deployment id"; exit 1; }
+          echo "Coolify deployment ${deployment}"
+          start=$SECONDS; last=""
+          while :; do
+            if [ $((SECONDS - start)) -ge 900 ]; then print_log; error "Deployment did not finish within 900 s (last status: ${last:-unknown})"; exit 1; fi
+            code=$(coolify GET "/deployments/${deployment}")
+            status="$(jq -r '.status // "unknown"' "$WORK/body" 2>/dev/null || echo "unreachable (HTTP $code)")"
+            [ "$status" != "$last" ] && { echo "$(date +%T) ${status}"; last="$status"; }
+            case "$status" in
+              finished) break ;;
+              failed|error|cancelled*) print_log; error "Coolify deployment ${status}"; exit 1 ;;
+            esac
+            sleep 10
+          done
+
+          # 3. Is it really this build, and is it healthy?
+          start=$SECONDS; running=""
+          while [ $((SECONDS - start)) -lt 180 ]; do
+            # Only hex digits from the server's answer reach the log.
+            running="$(curl -sS --max-time 10 -H 'Cache-Control: no-cache' "${APP}/version.txt" 2>/dev/null | tr -cd '0-9a-f' | head -c 40 || true)"
+            [ "$running" = "$TAG" ] && break
+            sleep 5
+          done
+          if [ "$running" != "$TAG" ]; then
+            # Say what Coolify thinks: container status and the end of the deployment log.
+            code=$(coolify GET "/applications/${COOLIFY_APP_UUID}")
+            echo "Coolify app status: $(jq -r '.status // "unknown"' "$WORK/body" 2>/dev/null)"
+            code=$(coolify GET "/deployments/${deployment}"); print_log
+            echo "HTTP answer of ${APP}/version.txt: $(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "${APP}/version.txt" || echo 000)"
+            error "${APP} runs version '${running:-none}' instead of ${TAG}"; exit 1
+          fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "${APP}/healthz" || echo 000)
+          [ "$code" = 200 ] || { error "${APP}/healthz answers HTTP $code"; exit 1; }
+          summary "✅ Running \`${TAG}\` on ${APP}"
+          echo "== ${TAG} is live"
+          EOF
+          chmod +x "$RUNNER_TEMP/deploy.sh"
+
+      # What runs now: the version an automatic rollback returns to.
+      - name: Note the running version
+        id: before
+        run: |
+          version="$(curl -sS --max-time 15 "${APP_URL%/}/version.txt" | tr -cd '0-9a-f' | head -c 40 || true)"
+          if [[ "$version" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "version=$version" >> "$GITHUB_OUTPUT"; echo "Running before the deployment: $version"
+          else
+            echo "::warning::The running build reports no commit, so a failed deployment can't be rolled back automatically this time."
+          fi
+
+      - name: Deploy the tested image
+        id: deploy
+        run: '"$RUNNER_TEMP/deploy.sh" "${GITHUB_SHA}"'
+
+      # The new version failed to deploy or to answer correctly: put the previous one back.
+      # The job stays red either way.
+      - name: Roll back to the previous version
+        if: failure() && steps.deploy.outcome == 'failure' && steps.before.outputs.version != '' && steps.before.outputs.version != github.sha
+        env:
+          PREVIOUS: ${{ steps.before.outputs.version }}
+        run: |
+          echo "::warning::Rolling back to ${PREVIOUS}"
+          echo "### ⚠️ Rolled back to \`${PREVIOUS:0:12}\`" >> "$GITHUB_STEP_SUMMARY"
+          "$RUNNER_TEMP/deploy.sh" "${PREVIOUS}"

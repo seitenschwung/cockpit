@@ -1,0 +1,30 @@
+name: CI & Deploy
+
+# Thin caller of the shared pipeline in seitenschwung/template. Owner-managed: the bot can't
+# change workflow files. To pick up pipeline fixes, the owner moves the v1 tag in the template.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pipeline:
+    # The called workflow can only use what is granted here.
+    permissions:
+      contents: read
+      packages: write
+    uses: seitenschwung/template/.github/workflows/pipeline.yml@v1
+    secrets: inherit
+
+  # Screenshots (optional; delete this job to go without): main keeps the baseline, a PR gets a comment
+  # with the pages that changed. Runs when the tests fail too, because a picture helps most then.
+  # The reusable workflow decides itself which events it acts on.
+  preview:
+    needs: pipeline
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: seitenschwung/template/.github/workflows/preview.yml@v1
+    secrets: inherit

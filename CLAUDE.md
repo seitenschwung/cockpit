@@ -2,7 +2,7 @@
 
 ## Purpose
 Static dashboard of the home server (boxes, repos, sites). Tailnet only: http://cockpit.seitenschwung.com.
-Brief and schema: `~/inbox/BRIEF.md`, `~/inbox/SCHEMA.md` (status.json schema 1). Don't deviate from the
+Brief and schema: `~/inbox/BRIEF.md`, `~/inbox/SCHEMA.md` (status.json schema 1). Runs on the VPS (tailnet only), `ports: 127.0.0.1:8090:8080`. CSP in nginx.conf forbids inline JS/CSS. Don't deviate from the
 schema; a missing field goes into the PR text, the owner extends the collector.
 
 ## Stack
@@ -14,7 +14,7 @@ Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is Ger
 - No npm, no tests; CI builds the Dockerfile and crawls `/` (axe, Lighthouse).
 
 ## Layout
-- `public/index.html`, `style.css`, `app.js`: the UI; reads only `./status.json` every 15 s.
+- `public/index.html`, `style.css`, `app.js`: the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` on localhost/CI, else the home server's URL (CORS, no credentials).
 - `public/status.json`: fake sample data (copy of `~/inbox/status.sample.json`). Never commit real data.
 - `Dockerfile`, `nginx.conf`: template for CI only; production serves `public/` directly.
 

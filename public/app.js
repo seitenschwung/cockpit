@@ -1,4 +1,8 @@
 'use strict';
+// Dev and CI (localhost) read the sample data next to the page; production reads the home server.
+const DATA_URL = ['localhost', '127.0.0.1'].includes(location.hostname)
+  ? './status.json'
+  : 'https://homeserver.tailedf987.ts.net/status.json';
 const REFRESH_MS = 15000;
 const STALE_S = 180;
 const RANK = { ok: 0, warn: 1, bad: 2 };
@@ -188,7 +192,7 @@ function render() {
 
 async function load() {
   try {
-    const res = await fetch('./status.json', { cache: 'no-store' });
+    const res = await fetch(DATA_URL, { cache: 'no-store', credentials: 'omit' });
     if (!res.ok) throw new Error(res.status);
     data = await res.json();
     fetchFailed = false;

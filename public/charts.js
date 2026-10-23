@@ -79,6 +79,63 @@ function renderControls(all, shown) {
   }
 }
 
+// ---- "Was muss ich tun?" (only from fields that exist) ----
+const TODO_SEV = { bad: 0, warn: 1, info: 2 };
+function todoItems(all, stale) {
+  const items = [];
+  const add = (sev, project, text, href) => items.push({ sev, project, text, href });
+  if (stale) add('bad', null, 'Sammler hängt, die Daten sind veraltet.');
+  for (const h of data.host) if (h.level !== 'ok') add(h.level, null, 'Host ' + h.name + ': ' + h.text);
+  for (const p of all) {
+    const b = p.box, r = p.repo, n = p.name;
+    if (b) {
+      if (b.running === false) add('bad', n, 'Box ist gestoppt.');
+      if (b.oom_killed) add('bad', n, 'Box wurde wegen Speichermangel beendet (OOM).');
+      if (b.running !== false) {
+        if (b.logged_in === false) add('bad', n, 'Claude ist nicht angemeldet.');
+        if (b.token_ok === false) add('bad', n, 'Token ist ungültig oder abgelaufen.');
+        if (b.selftest && b.selftest !== 'ok') add('warn', n, 'Selbsttest: ' + b.selftest + '.');
+        if (b.old_image) add('warn', n, 'Box läuft auf einem alten Image.');
+        if (b.restarts > 0) add('warn', n, b.restarts + (b.restarts === 1 ? ' Neustart' : ' Neustarts') + ' seit dem Start.');
+      }
+      for (const note of b.notes || []) add('warn', n, note);
+      const busy = b.claude && b.claude.state === 'working'; // changes are expected while Claude works
+      if (!busy && b.unpushed > 0) add('info', n, b.unpushed + ' Commit' + (b.unpushed > 1 ? 's' : '') + ' nicht gepusht (' + b.branch + ').');
+      if (!busy && b.uncommitted > 0) add('info', n, b.uncommitted + ' Datei' + (b.uncommitted > 1 ? 'en' : '') + ' nicht committet (' + b.branch + ').');
+    }
+    if (r) {
+      if (r.main && r.main.ci && r.main.ci.conclusion === 'failure') add('bad', n, 'CI auf main ist rot.', r.main.ci.url);
+      const s = r.site;
+      if (s && s.checked !== false && s.level && s.level !== 'ok') add(s.level, n, 'Seite: ' + (s.note || (s.up === false ? 'nicht erreichbar' : 'Abweichung')) + '.');
+      for (const pr of r.prs) {
+        const t = '#' + pr.number + ' ' + pr.title;
+        if (pr.labels.includes('manual-review')) add('warn', n, 'PR wartet auf deine Prüfung: ' + t, pr.url);
+        else if (pr.ci === 'red') add('bad', n, 'PR mit rotem CI: ' + t, pr.url);
+      }
+    }
+  }
+  return items.sort((a, b) => TODO_SEV[a.sev] - TODO_SEV[b.sev]);
+}
+function renderTodo(all, stale) {
+  const list = $('todo');
+  const items = todoItems(all, stale);
+  if (!items.length) { list.replaceChildren(el('li', 'todo-none', 'Nichts zu tun. Alles läuft.')); return; }
+  list.replaceChildren(...items.map((i) => {
+    const li = el('li', 'todo-item ' + i.sev);
+    const txt = el('span', 'tx');
+    if (i.project) {
+      const b = el('button', 'proj', i.project);
+      b.type = 'button';
+      b.dataset.go = i.project;
+      txt.append(b, ' ');
+    }
+    txt.append(i.text);
+    li.append(txt);
+    if (i.href) li.append(link(i.href, 'Öffnen'));
+    return li;
+  }));
+}
+
 // ---- pull requests (all repos, review-needed first) ----
 const PR_CI = { green: 'CI grün', red: 'CI rot', running: 'CI läuft', none: 'kein CI' };
 const prRank = (x) => (x.labels.includes('manual-review') ? 0 : 3) + ({ red: 0, running: 1, none: 2, green: 2 }[x.ci] ?? 2);

@@ -356,6 +356,7 @@ function render() {
     $('donut').replaceChildren();
     $('cards').replaceChildren();
     $('prs').replaceChildren();
+    $('todo').replaceChildren();
     $('prsub').textContent = '';
     $('prcount').textContent = '';
     renderInsights(null);
@@ -405,6 +406,7 @@ function render() {
   $('cards').replaceChildren(...(ui.v === 'cards' ? shown.map(renderCard) : []));
   renderTable(shown);
   renderPrs(all);
+  renderTodo(all, stale);
   renderControls(all, shown);
   renderInsights(all);
 

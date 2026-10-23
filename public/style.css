@@ -286,3 +286,14 @@ main { padding-bottom: 56px; }
 
 .navn { margin-left: auto; font-size: 12px; font-weight: 650; min-width: 18px; text-align: center; padding: 0 6px; border-radius: 99px; background: var(--warn-bg); color: var(--warn); }
 .navn:empty { display: none; }
+
+.todo { margin-top: 22px; }
+.todo h2 { font-size: 15px; font-weight: 650; margin: 0 0 10px; }
+.todo ul { display: grid; gap: 6px; }
+.todo-item, .todo-none { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-left-width: 3px; border-radius: 10px; padding: 9px 14px; font-size: 14px; }
+.todo-none { color: var(--muted); border-left-color: var(--ok); }
+.todo-item.bad { border-left-color: var(--bad); } .todo-item.warn { border-left-color: var(--warn); } .todo-item.info { border-left-color: var(--line-2); }
+.todo-item .tx { flex: 1; min-width: 0; }
+.todo-item a { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.todo-item .proj { font: inherit; font-weight: 650; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.todo-item .proj:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 4px; }

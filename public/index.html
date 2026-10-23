@@ -11,15 +11,21 @@
 </head>
 <body>
   <header class="top" id="top" data-level="unknown">
-    <div class="wrap top-inner">
-      <div class="verdict">
-        <span class="dot" aria-hidden="true"></span>
-        <h1 id="verdict">Lade …</h1>
+    <div class="wrap">
+      <div class="bar">
+        <span class="brand"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M2 12h4l3-8 4 16 3-8h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Cockpit</span>
+        <p class="age"><span class="live" aria-hidden="true"></span><span id="age"></span></p>
       </div>
-      <ul class="stats" id="stats" aria-label="Kennzahlen"></ul>
-      <p class="age" id="age" aria-live="off"></p>
+      <div class="hero">
+        <div class="verdict">
+          <h1 id="verdict">Lade …</h1>
+          <p class="sub" id="sub"></p>
+        </div>
+        <div class="donut" id="donut" role="img" aria-label="Verteilung der Zustände"></div>
+        <ul class="stats" id="stats" aria-label="Kennzahlen"></ul>
+      </div>
+      <p class="notice" id="notice" role="alert" hidden></p>
     </div>
-    <div class="wrap"><p class="notice" id="notice" role="alert" hidden></p></div>
   </header>
 
   <main class="wrap">

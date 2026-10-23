@@ -93,3 +93,15 @@ test('theme and density choices survive a reload', async ({ page }) => {
 });
 
 function d0name(d) { return d.boxes[0].project; }
+
+test('Back button and manual hash change switch pages', async ({ page }) => {
+  await open(page);
+  await page.locator('#nav button[data-pg="stats"]').click();
+  await page.locator('#nav button[data-pg="system"]').click();
+  await expect(page.locator('[data-page="system"]')).toBeVisible();
+  await expect(page.locator('#collector')).toContainText('Version 1');
+  await page.goBack();
+  await expect(page.locator('[data-page="stats"]')).toBeVisible();
+  await page.evaluate(() => { location.hash = 'pg=prs'; });
+  await expect(page.locator('[data-page="prs"]')).toBeVisible();
+});

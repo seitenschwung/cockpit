@@ -259,20 +259,26 @@ function store(k, v) {
   return null;
 }
 // UI state lives in the URL hash (#f=problems&q=x&v=table&s=ram&r=3&m=out), so views can be shared and bookmarked.
-const hp = new URLSearchParams(location.hash.slice(1));
 const pick = (v, ok, d) => (ok.includes(v) ? v : d);
 const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', project: 'Projekt', stats: 'Statistik', system: 'System' };
-const ui = {
-  pg: pick(hp.get('pg'), Object.keys(PAGES), 'overview'),
-  f: pick(hp.get('f'), ['all', 'problems', 'working', 'prs', 'stopped'], 'all'),
-  p: (hp.get('p') || '').slice(0, 80),
-  q: (hp.get('q') || '').slice(0, 80),
-  v: pick(hp.get('v'), ['cards', 'table'], 'cards'),
-  r: pick(hp.get('r'), ['3', '7'], '7'),
-  m: pick(hp.get('m'), ['out', 'cache', 'turns'], 'out'),
-  res: pick(hp.get('res'), ['ram', 'cpu'], 'ram'),
-  rev: hp.get('rev') === '1',
-};
+const ui = {};
+let sortKey = 'status';
+function readHash() {
+  const hp = new URLSearchParams(location.hash.slice(1));
+  Object.assign(ui, {
+    pg: pick(hp.get('pg'), Object.keys(PAGES), 'overview'),
+    f: pick(hp.get('f'), ['all', 'problems', 'working', 'prs', 'stopped'], 'all'),
+    p: (hp.get('p') || '').slice(0, 80),
+    q: (hp.get('q') || '').slice(0, 80),
+    v: pick(hp.get('v'), ['cards', 'table'], 'cards'),
+    r: pick(hp.get('r'), ['3', '7'], '7'),
+    m: pick(hp.get('m'), ['out', 'cache', 'turns'], 'out'),
+    res: pick(hp.get('res'), ['ram', 'cpu'], 'ram'),
+    rev: hp.get('rev') === '1',
+  });
+  sortKey = hp.get('s') || store('sort') || 'status';
+}
+readHash();
 // Theme and density are per-device preferences, not part of the shareable URL.
 const prefs = { theme: pick(store('theme'), ['auto', 'light', 'dark'], 'auto'), density: pick(store('density'), ['normal', 'compact'], 'normal') };
 function applyPrefs() {
@@ -283,7 +289,6 @@ function applyPrefs() {
   for (const b of document.querySelectorAll('#density button')) b.setAttribute('aria-pressed', String(b.dataset.density === prefs.density));
 }
 applyPrefs();
-let sortKey = hp.get('s') || store('sort') || 'status';
 function syncUrl() {
   const p = new URLSearchParams();
   if (ui.pg !== 'overview') p.set('pg', ui.pg);
@@ -296,7 +301,10 @@ function syncUrl() {
   if (ui.r !== '7') p.set('r', ui.r);
   if (ui.m !== 'out') p.set('m', ui.m);
   if (ui.res !== 'ram') p.set('res', ui.res);
-  try { history.replaceState(null, '', location.pathname + location.search + (p.toString() ? '#' + p : '')); } catch (e) { /* ignore */ }
+  // A page change is a history entry (Back works); filters, search and sorting only replace the current one.
+  const prev = new URLSearchParams(location.hash.slice(1));
+  const nav = (prev.get('pg') || 'overview') !== ui.pg || (ui.pg === 'project' && prev.get('p') !== ui.p);
+  try { history[nav ? 'pushState' : 'replaceState'](null, '', location.pathname + location.search + (p.toString() ? '#' + p : '')); } catch (e) { /* ignore */ }
 }
 const openState = new Map(); // card name -> user's choice; unset = open only when not ok
 const isOpen = (p) => (openState.has(p.name) ? openState.get(p.name) : p.level !== 'ok');
@@ -397,6 +405,7 @@ function render() {
     $('prcount').textContent = '';
     renderInsights(null);
     $('host').replaceChildren();
+    $('collector').replaceChildren();
     notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
     notice.className = 'notice';
     notice.hidden = false;
@@ -462,6 +471,17 @@ function render() {
     }
     return li;
   }));
+
+  const info = (name, text, level) => {
+    const li = el('li'), head = el('div', 'h');
+    head.append(el('span', 'dot ' + level), el('b', null, name));
+    li.append(head, el('span', 'txt', text));
+    return li;
+  };
+  $('collector').replaceChildren(
+    info('Schema', 'Version ' + data.schema, data.schema === 1 ? 'ok' : 'bad'),
+    info('Letzter Lauf', 'vor ' + ageText(Date.parse(data.generated_at)) + (data.took_ms != null ? ', Dauer ' + data.took_ms + ' ms' : ''), stale ? 'bad' : 'ok'),
+  );
 }
 
 // The collector can't reach the cockpit's own host, so the browser checks its own origin (same origin, no CORS).

@@ -1,7 +1,22 @@
 {
  "schema": 1,
- "generated_at": "2026-10-23T11:30:00+00:00",
- "took_ms": 7817,
+ "generated_at": "2026-10-23T12:01:28+00:00",
+ "took_ms": 8780,
+ "summary": {
+  "ok": 26,
+  "warn": 0,
+  "bad": 0,
+  "open_prs": 1,
+  "deploying": 0,
+  "working": 2,
+  "tokens_today": {
+   "in": 476,
+   "out": 127430,
+   "cache_read": 23480465,
+   "cache_write": 968539,
+   "turns": 230
+  }
+ },
  "host": [
   {
    "name": "proxy",
@@ -11,7 +26,7 @@
   {
    "name": "image",
    "level": "ok",
-   "text": "box image built 2 d ago"
+   "text": "box image built 0 d ago"
   },
   {
    "name": "tokens",
@@ -21,294 +36,650 @@
   {
    "name": "disk /tank/code/sites",
    "level": "ok",
-   "text": "disk /tank/code/sites at 33%"
+   "text": "disk /tank/code/sites at 34%"
   },
   {
    "name": "disk /mnt/hdd",
-   "level": "warn",
-   "text": "disk /mnt/hdd at 84%"
+   "level": "ok",
+   "text": "disk /mnt/hdd at 0%"
   },
   {
    "name": "disk /",
    "level": "ok",
-   "text": "disk / at 33%"
+   "text": "disk / at 34%"
   }
  ],
  "boxes": [
   {
-   "project": "bakery",
-   "repo": "example-org/bakery",
+   "project": "demo-1",
+   "repo": "example-org/demo-1",
    "running": true,
    "old_image": false,
    "selftest": "ok",
    "logged_in": true,
    "token_ok": true,
-   "branch": "main",
-   "uncommitted": 0,
-   "unpushed": 0,
-   "notes": [],
-   "level": "ok"
-  },
-  {
-   "project": "fotostudio",
-   "repo": "example-org/fotostudio",
-   "running": true,
-   "old_image": false,
-   "selftest": "ok",
-   "logged_in": true,
-   "token_ok": true,
-   "branch": "claude/gallery-webp",
+   "branch": "claude/feature",
    "uncommitted": 2,
    "unpushed": 0,
    "notes": [],
-   "level": "ok"
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.5,
+    "mem_mib": 303,
+    "mem_limit_mib": 4096,
+    "mem_pct": 7.4,
+    "pids": 36
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:23:54+00:00",
+    "today": {
+     "date": "2026-10-23",
+     "in": 8,
+     "out": 1253,
+     "cache_read": 99044,
+     "cache_write": 25838,
+     "turns": 4
+    },
+    "days": [
+     {
+      "date": "2026-10-16",
+      "in": 10,
+      "out": 4247,
+      "cache_read": 1072863,
+      "cache_write": 17889,
+      "turns": 5
+     },
+     {
+      "date": "2026-10-17",
+      "in": 12,
+      "out": 976,
+      "cache_read": 332406,
+      "cache_write": 49830,
+      "turns": 6
+     },
+     {
+      "date": "2026-10-20",
+      "in": 1628,
+      "out": 639630,
+      "cache_read": 208012512,
+      "cache_write": 2248066,
+      "turns": 800
+     },
+     {
+      "date": "2026-10-22",
+      "in": 130,
+      "out": 45866,
+      "cache_read": 30547232,
+      "cache_write": 975629,
+      "turns": 64
+     },
+     {
+      "date": "2026-10-23",
+      "in": 8,
+      "out": 1253,
+      "cache_read": 99044,
+      "cache_write": 25838,
+      "turns": 4
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 801,
+    "denied_1h": 0,
+    "expected_denied_1h": 32,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:23:39Z"
   },
   {
-   "project": "verein",
-   "repo": "example-org/verein",
+   "project": "demo-2",
+   "repo": "example-org/demo-2",
    "running": true,
    "old_image": false,
    "selftest": "ok",
    "logged_in": true,
    "token_ok": true,
-   "branch": "claude/kontaktformular",
+   "branch": "claude/feature",
+   "uncommitted": 1,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 54.3,
+    "mem_mib": 635,
+    "mem_limit_mib": 4096,
+    "mem_pct": 15.5,
+    "pids": 154
+   },
+   "claude": {
+    "state": "working",
+    "last_activity": "2026-10-23T12:00:45+00:00",
+    "today": {
+     "date": "2026-10-23",
+     "in": 140,
+     "out": 41065,
+     "cache_read": 7343575,
+     "cache_write": 112708,
+     "turns": 65
+    },
+    "days": [
+     {
+      "date": "2026-10-23",
+      "in": 140,
+      "out": 41065,
+      "cache_read": 7343575,
+      "cache_write": 112708,
+      "turns": 65
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 873,
+    "denied_1h": 18,
+    "expected_denied_1h": 91,
+    "denied_hosts": [
+     {
+      "host": "accounts.google.com",
+      "count": 8
+     },
+     {
+      "host": "android.clients.google.com",
+      "count": 8
+     },
+     {
+      "host": "update.googleapis.com",
+      "count": 2
+     }
+    ]
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T11:15:38Z"
+  },
+  {
+   "project": "demo-3",
+   "repo": "example-org/demo-3",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/feature",
+   "uncommitted": 1,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.4,
+    "mem_mib": 247,
+    "mem_limit_mib": 4096,
+    "mem_pct": 6.0,
+    "pids": 25
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:23:54+00:00",
+    "today": null,
+    "days": [
+     {
+      "date": "2026-10-21",
+      "in": 140,
+      "out": 36095,
+      "cache_read": 7433122,
+      "cache_write": 168626,
+      "turns": 68
+     },
+     {
+      "date": "2026-10-22",
+      "in": 26,
+      "out": 7089,
+      "cache_read": 1235941,
+      "cache_write": 124441,
+      "turns": 13
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 762,
+    "denied_1h": 0,
+    "expected_denied_1h": 30,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:23:44Z"
+  },
+  {
+   "project": "demo-4",
+   "repo": "example-org/demo-4",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/feature",
+   "uncommitted": 1,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 24.0,
+    "mem_mib": 687,
+    "mem_limit_mib": 4096,
+    "mem_pct": 16.8,
+    "pids": 166
+   },
+   "claude": {
+    "state": "recent",
+    "last_activity": "2026-10-23T11:55:40+00:00",
+    "today": {
+     "date": "2026-10-23",
+     "in": 310,
+     "out": 78418,
+     "cache_read": 14856887,
+     "cache_write": 276466,
+     "turns": 152
+    },
+    "days": [
+     {
+      "date": "2026-10-21",
+      "in": 356,
+      "out": 114547,
+      "cache_read": 19402762,
+      "cache_write": 328384,
+      "turns": 175
+     },
+     {
+      "date": "2026-10-23",
+      "in": 310,
+      "out": 78418,
+      "cache_read": 14856887,
+      "cache_write": 276466,
+      "turns": 152
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 870,
+    "denied_1h": 46,
+    "expected_denied_1h": 37,
+    "denied_hosts": [
+     {
+      "host": "content-autofill.googleapis.com",
+      "count": 40
+     },
+     {
+      "host": "android.clients.google.com",
+      "count": 6
+     }
+    ]
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:23:50Z"
+  },
+  {
+   "project": "demo-5",
+   "repo": "example-org/demo-5",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.7,
+    "mem_mib": 244,
+    "mem_limit_mib": 4096,
+    "mem_pct": 6.0,
+    "pids": 27
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:25:17+00:00",
+    "today": {
+     "date": "2026-10-23",
+     "in": 2,
+     "out": 4,
+     "cache_read": 8964,
+     "cache_write": 18727,
+     "turns": 1
+    },
+    "days": [
+     {
+      "date": "2026-10-23",
+      "in": 2,
+      "out": 4,
+      "cache_read": 8964,
+      "cache_write": 18727,
+      "turns": 1
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 771,
+    "denied_1h": 0,
+    "expected_denied_1h": 31,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:23:56Z"
+  },
+  {
+   "project": "demo-6",
+   "repo": "example-org/demo-6",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 5.7,
+    "mem_mib": 254,
+    "mem_limit_mib": 4096,
+    "mem_pct": 6.2,
+    "pids": 27
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:24:11+00:00",
+    "today": null,
+    "days": [
+     {
+      "date": "2026-10-17",
+      "in": 12,
+      "out": 1894,
+      "cache_read": 287971,
+      "cache_write": 36327,
+      "turns": 6
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 771,
+    "denied_1h": 0,
+    "expected_denied_1h": 32,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:24:02Z"
+  },
+  {
+   "project": "demo-7",
+   "repo": "example-org/demo-7",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/feature",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.5,
+    "mem_mib": 250,
+    "mem_limit_mib": 4096,
+    "mem_pct": 6.1,
+    "pids": 26
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:24:17+00:00",
+    "today": null,
+    "days": [
+     {
+      "date": "2026-10-22",
+      "in": 38,
+      "out": 6845,
+      "cache_read": 1279160,
+      "cache_write": 62989,
+      "turns": 19
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 771,
+    "denied_1h": 0,
+    "expected_denied_1h": 32,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:24:08Z"
+  },
+  {
+   "project": "demo-8",
+   "repo": "example-org/demo-8",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/feature",
    "uncommitted": 0,
    "unpushed": 3,
    "notes": [],
-   "level": "ok"
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.9,
+    "mem_mib": 308,
+    "mem_limit_mib": 4096,
+    "mem_pct": 7.5,
+    "pids": 27
+   },
+   "claude": {
+    "state": "working",
+    "last_activity": "2026-10-23T11:58:55+00:00",
+    "today": {
+     "date": "2026-10-23",
+     "in": 10,
+     "out": 4872,
+     "cache_read": 768779,
+     "cache_write": 388493,
+     "turns": 5
+    },
+    "days": [
+     {
+      "date": "2026-10-23",
+      "in": 10,
+      "out": 4872,
+      "cache_read": 768779,
+      "cache_write": 388493,
+      "turns": 5
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 785,
+    "denied_1h": 0,
+    "expected_denied_1h": 37,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:24:15Z"
   },
   {
-   "project": "portfolio",
-   "repo": "example-org/portfolio",
+   "project": "demo-9",
+   "repo": "example-org/demo-9",
    "running": true,
    "old_image": false,
    "selftest": "ok",
-   "logged_in": false,
-   "token_ok": true,
-   "branch": "main",
-   "uncommitted": 0,
-   "unpushed": 0,
-   "notes": [
-    "not logged in"
-   ],
-   "level": "warn"
-  },
-  {
-   "project": "weinbau",
-   "repo": "example-org/weinbau",
-   "running": false,
-   "old_image": false,
-   "selftest": null,
-   "logged_in": null,
-   "token_ok": null,
-   "branch": "main",
-   "uncommitted": 0,
-   "unpushed": 0,
-   "notes": [
-    "stopped"
-   ],
-   "level": "warn"
-  },
-  {
-   "project": "yoga-studio",
-   "repo": "example-org/yoga-studio",
-   "running": true,
-   "old_image": true,
-   "selftest": "ok",
-   "logged_in": true,
-   "token_ok": true,
-   "branch": "main",
-   "uncommitted": 0,
-   "unpushed": 0,
-   "notes": [
-    "old image (dev recreate)"
-   ],
-   "level": "warn"
-  },
-  {
-   "project": "tischlerei",
-   "repo": "example-org/tischlerei",
-   "running": true,
-   "old_image": false,
-   "selftest": "ok",
-   "logged_in": true,
-   "token_ok": false,
-   "branch": "main",
-   "uncommitted": 0,
-   "unpushed": 0,
-   "notes": [
-    "bot token expired"
-   ],
-   "level": "bad"
-  },
-  {
-   "project": "kanzlei",
-   "repo": "example-org/kanzlei",
-   "running": true,
-   "old_image": false,
-   "selftest": "fail",
    "logged_in": true,
    "token_ok": true,
    "branch": "main",
    "uncommitted": 0,
    "unpushed": 0,
-   "notes": [
-    "SANDBOX: example.com reachable (expected blocked)"
-   ],
-   "level": "bad"
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.4,
+    "mem_mib": 267,
+    "mem_limit_mib": 4096,
+    "mem_pct": 6.5,
+    "pids": 28
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:24:29+00:00",
+    "today": {
+     "date": "2026-10-23",
+     "in": 6,
+     "out": 1818,
+     "cache_read": 403216,
+     "cache_write": 146307,
+     "turns": 3
+    },
+    "days": [
+     {
+      "date": "2026-10-20",
+      "in": 80,
+      "out": 37803,
+      "cache_read": 3845683,
+      "cache_write": 104090,
+      "turns": 35
+     },
+     {
+      "date": "2026-10-21",
+      "in": 56,
+      "out": 14179,
+      "cache_read": 3684417,
+      "cache_write": 257397,
+      "turns": 25
+     },
+     {
+      "date": "2026-10-22",
+      "in": 4,
+      "out": 787,
+      "cache_read": 216471,
+      "cache_write": 138713,
+      "turns": 2
+     },
+     {
+      "date": "2026-10-23",
+      "in": 6,
+      "out": 1818,
+      "cache_read": 403216,
+      "cache_write": 146307,
+      "turns": 3
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 781,
+    "denied_1h": 0,
+    "expected_denied_1h": 34,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:24:20Z"
+  },
+  {
+   "project": "demo-10",
+   "repo": "example-org/demo-10",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/feature",
+   "uncommitted": 1,
+   "unpushed": 3,
+   "notes": [],
+   "level": "ok",
+   "stats": {
+    "cpu_pct": 0.4,
+    "mem_mib": 248,
+    "mem_limit_mib": 4096,
+    "mem_pct": 6.0,
+    "pids": 26
+   },
+   "claude": {
+    "state": "idle",
+    "last_activity": "2026-10-23T10:24:44+00:00",
+    "today": null,
+    "days": [
+     {
+      "date": "2026-10-17",
+      "in": 58,
+      "out": 10486,
+      "cache_read": 3733083,
+      "cache_write": 610117,
+      "turns": 29
+     },
+     {
+      "date": "2026-10-21",
+      "in": 302,
+      "out": 94310,
+      "cache_read": 20780960,
+      "cache_write": 2085836,
+      "turns": 141
+     },
+     {
+      "date": "2026-10-22",
+      "in": 30,
+      "out": 7667,
+      "cache_read": 1353676,
+      "cache_write": 360033,
+      "turns": 15
+     }
+    ]
+   },
+   "egress": {
+    "requests_1h": 773,
+    "denied_1h": 0,
+    "expected_denied_1h": 27,
+    "denied_hosts": []
+   },
+   "restarts": 0,
+   "oom_killed": false,
+   "started_at": "2026-10-23T10:24:25Z"
   }
  ],
  "repos": [
   {
-   "repo": "example-org/bakery",
-   "url": "https://github.com/example-org/bakery",
+   "repo": "example-org/demo-8",
+   "url": "https://github.com/example-org/demo-8",
    "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/bakery/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
+    "sha": "0ce4e752ab31e1e655b3b0e47086ddf289c50396",
+    "title": "Example commit",
+    "date": "2026-10-23T11:54:16Z",
+    "ci": null
    },
    "activity": "idle",
    "prs": [],
-   "site": {
-    "url": "https://bakery.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
+   "site": null,
    "level": "ok"
   },
   {
-   "repo": "example-org/fotostudio",
-   "url": "https://github.com/example-org/fotostudio",
+   "repo": "example-org/demo-1",
+   "url": "https://github.com/example-org/demo-1",
    "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
+    "sha": "79f77196177bab63f71bdcbde8362772973abaf6",
+    "title": "Example commit",
+    "date": "2026-10-22T13:09:14Z",
     "ci": {
      "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/fotostudio/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
-   },
-   "activity": "deploying",
-   "prs": [
-    {
-     "number": 14,
-     "title": "Gallery as WebP, lazy loading",
-     "url": "https://github.com/example-org/x/pull/14",
-     "draft": false,
-     "labels": [
-      "manual-review"
-     ],
-     "author": "app/philipp-claude-bot",
-     "created_at": "2026-10-23T09:12:00Z",
-     "ci": "green"
-    }
-   ],
-   "site": {
-    "url": "https://fotostudio.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
-   "level": "ok",
-   "active_run": {
-    "url": "https://github.com/example-org/fotostudio/actions/runs/2",
-    "title": "Gallery as WebP",
-    "started_at": "2026-10-23T11:27:40Z"
-   }
-  },
-  {
-   "repo": "example-org/verein",
-   "url": "https://github.com/example-org/verein",
-   "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/verein/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
-   },
-   "activity": "ci_running",
-   "prs": [
-    {
-     "number": 7,
-     "title": "Contact form with spam protection",
-     "url": "https://github.com/example-org/x/pull/7",
-     "draft": false,
-     "labels": [],
-     "author": "app/philipp-claude-bot",
-     "created_at": "2026-10-23T09:12:00Z",
-     "ci": "running"
-    },
-    {
-     "number": 6,
-     "title": "Docs: CLAUDE.md",
-     "url": "https://github.com/example-org/x/pull/6",
-     "draft": false,
-     "labels": [],
-     "author": "app/philipp-claude-bot",
-     "created_at": "2026-10-23T09:12:00Z",
-     "ci": "green"
-    },
-    {
-     "number": 5,
-     "title": "Draft: new events page",
-     "url": "https://github.com/example-org/x/pull/5",
-     "draft": true,
-     "labels": [],
-     "author": "app/philipp-claude-bot",
-     "created_at": "2026-10-23T09:12:00Z",
-     "ci": "none"
-    }
-   ],
-   "site": {
-    "url": "https://verein.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
-   "level": "ok",
-   "active_run": {
-    "url": "https://github.com/example-org/verein/actions/runs/3",
-    "title": "Contact form",
-    "started_at": "2026-10-23T11:29:10Z"
-   }
-  },
-  {
-   "repo": "example-org/portfolio",
-   "url": "https://github.com/example-org/portfolio",
-   "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/portfolio/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-1/actions/runs/1",
+     "created_at": "2026-10-22T13:09:17Z"
     }
    },
    "activity": "idle",
@@ -317,146 +688,36 @@
    "level": "ok"
   },
   {
-   "repo": "example-org/weinbau",
-   "url": "https://github.com/example-org/weinbau",
+   "repo": "example-org/demo-2",
+   "url": "https://github.com/example-org/demo-2",
    "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
+    "sha": "2484d8d4e81fb9d7dd89288e57b640fbb484e8b8",
+    "title": "Example commit",
+    "date": "2026-10-23T11:48:30Z",
     "ci": {
      "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/weinbau/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
-   },
-   "activity": "idle",
-   "prs": [],
-   "site": {
-    "url": "https://weinbau.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
-   "level": "bad"
-  },
-  {
-   "repo": "example-org/yoga-studio",
-   "url": "https://github.com/example-org/yoga-studio",
-   "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/yoga-studio/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
-   },
-   "activity": "idle",
-   "prs": [],
-   "site": {
-    "url": "https://yoga-studio.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
-   "level": "warn"
-  },
-  {
-   "repo": "example-org/tischlerei",
-   "url": "https://github.com/example-org/tischlerei",
-   "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "failure",
-     "title": "Update dependencies",
-     "url": "https://github.com/example-org/tischlerei/actions/runs/4",
-     "created_at": "2026-10-23T08:02:00Z"
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-2/actions/runs/1",
+     "created_at": "2026-10-23T11:48:33Z"
     }
    },
    "activity": "idle",
    "prs": [
     {
-     "number": 21,
-     "title": "Fix broken image paths on mobile",
-     "url": "https://github.com/example-org/x/pull/21",
+     "number": 1,
+     "title": "Example PR",
+     "url": "https://github.com/example-org/demo-2/pull/1",
      "draft": false,
-     "labels": [],
+     "labels": [
+      "manual-review"
+     ],
      "author": "app/philipp-claude-bot",
-     "created_at": "2026-10-23T09:12:00Z",
-     "ci": "red"
+     "created_at": "2026-10-23T11:56:00Z",
+     "ci": "running"
     }
    ],
    "site": {
-    "url": "https://tischlerei.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
-   "level": "bad"
-  },
-  {
-   "repo": "example-org/kanzlei",
-   "url": "https://github.com/example-org/kanzlei",
-   "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/kanzlei/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
-   },
-   "activity": "idle",
-   "prs": [],
-   "site": {
-    "url": "https://kanzlei.example.com",
-    "up": true,
-    "http_status": 200,
-    "ms": 152,
-    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "current": true,
-    "level": "ok",
-    "checked": true
-   },
-   "level": "ok"
-  },
-  {
-   "repo": "example-org/cockpit",
-   "url": "https://github.com/example-org/cockpit",
-   "main": {
-    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
-    "title": "Redesign: hero section and gallery",
-    "date": "2026-10-23T10:45:07Z",
-    "ci": {
-     "conclusion": "success",
-     "title": "Redesign: hero section and gallery",
-     "url": "https://github.com/example-org/cockpit/actions/runs/1",
-     "created_at": "2026-10-23T10:45:07Z"
-    }
-   },
-   "activity": "idle",
-   "prs": [],
-   "site": {
-    "url": "https://cockpit.example.com",
+    "url": "https://ui.example.ts.net:8444",
     "checked": false,
     "up": null,
     "http_status": null,
@@ -464,16 +725,178 @@
     "version": null,
     "current": null,
     "level": "ok",
-    "note": "Sammler erreicht diese Seite nicht, Stand vom letzten Deploy"
+    "note": "not reachable from the home server, status from the last deploy"
+   },
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-3",
+   "url": "https://github.com/example-org/demo-3",
+   "main": {
+    "sha": "f1367f39765ba0a9d704d97370ae264a2a4c2795",
+    "title": "Example commit",
+    "date": "2026-10-22T09:55:49Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-3/actions/runs/1",
+     "created_at": "2026-10-22T09:55:53Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://demo-3.example.com",
+    "checked": true,
+    "up": true,
+    "http_status": 200,
+    "ms": 186,
+    "version": "f1367f39765ba0a9d704d97370ae264a2a4c2795",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-4",
+   "url": "https://github.com/example-org/demo-4",
+   "main": {
+    "sha": "82ffae09ce79b0a5029102a47f04416440b9cd9d",
+    "title": "Example commit",
+    "date": "2026-10-23T11:39:14Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-4/actions/runs/1",
+     "created_at": "2026-10-23T11:38:59Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://demo-4.example.com",
+    "checked": true,
+    "up": true,
+    "http_status": 200,
+    "ms": 196,
+    "version": "82ffae09ce79b0a5029102a47f04416440b9cd9d",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-5",
+   "url": "https://github.com/example-org/demo-5",
+   "main": {
+    "sha": "e30a8f3b7ae28e04b809a28c380b1c5ced54df35",
+    "title": "Example commit",
+    "date": "2026-10-21T21:20:28Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-5/actions/runs/1",
+     "created_at": "2026-10-21T21:20:32Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": null,
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-6",
+   "url": "https://github.com/example-org/demo-6",
+   "main": {
+    "sha": "8f90e71762f8d47c06a59bb969937ca59c6a611e",
+    "title": "Example commit",
+    "date": "2026-10-21T21:20:36Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-6/actions/runs/1",
+     "created_at": "2026-10-21T21:20:40Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": null,
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-7",
+   "url": "https://github.com/example-org/demo-7",
+   "main": {
+    "sha": "051ae8629237be967656671f67ac4a6b6ec8353b",
+    "title": "Example commit",
+    "date": "2026-10-22T21:28:19Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-7/actions/runs/1",
+     "created_at": "2026-10-22T21:28:23Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://demo-7.example.com",
+    "checked": true,
+    "up": true,
+    "http_status": 200,
+    "ms": 198,
+    "version": "051ae8629237be967656671f67ac4a6b6ec8353b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-9",
+   "url": "https://github.com/example-org/demo-9",
+   "main": {
+    "sha": "5145678aec613fa96bb7d3b51242bc1959d60583",
+    "title": "Example commit",
+    "date": "2026-10-21T21:20:42Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-9/actions/runs/1",
+     "created_at": "2026-10-21T21:20:46Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": null,
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/demo-10",
+   "url": "https://github.com/example-org/demo-10",
+   "main": {
+    "sha": "ebf300401bb13176aa70bb843fb0202300ceb0ac",
+    "title": "Example commit",
+    "date": "2026-10-23T11:54:27Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Example commit",
+     "url": "https://github.com/example-org/demo-10/actions/runs/1",
+     "created_at": "2026-10-23T11:54:30Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://demo-10.example.com",
+    "checked": true,
+    "up": true,
+    "http_status": 200,
+    "ms": 166,
+    "version": "ebf300401bb13176aa70bb843fb0202300ceb0ac",
+    "current": true,
+    "level": "ok"
    },
    "level": "ok"
   }
- ],
- "summary": {
-  "ok": 13,
-  "warn": 5,
-  "bad": 4,
-  "open_prs": 5,
-  "deploying": 1
- }
+ ]
 }

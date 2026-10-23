@@ -150,3 +150,22 @@ main { padding-bottom: 56px; }
   .stats li { min-width: 0; }
   .card { padding: 16px 16px 14px; }
 }
+
+/* Box stats */
+.boxstats { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; }
+.boxstats .small { font-size: 12px; }
+.boxstats .num, .stats small { font-variant-numeric: tabular-nums; }
+.cl { display: flex; align-items: center; gap: 8px; }
+.cdot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.cl.recent .cdot { background: var(--warn); }
+.cl.working .cdot { background: var(--info); box-shadow: var(--glow) var(--info); animation: pulse 2.4s ease-in-out infinite; }
+.cl.working b { color: var(--info); }
+.mem { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.tok { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.tok b { font-size: 18px; }
+.spark { flex: none; }
+.spark rect { fill: var(--line-2); } .spark rect.last { fill: var(--info); }
+.egress summary { cursor: pointer; }
+.egress ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; overflow-wrap: anywhere; }
+.stats li.tokens small { display: block; font-size: 11px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .cl.working .cdot { animation: none; } }

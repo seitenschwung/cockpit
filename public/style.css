@@ -11,8 +11,9 @@
   --c0: #4da3ff; --c1: #2fd18b; --c2: #f2a93b; --c3: #b794ff; --c4: #ff7eb6; --c5: #8fa0ba;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
+/* Theme: follows the system unless the user picked one (html[data-theme]). */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme="dark"]) {
     --bg: #eef2f8; --bg-glow: #dfe9f7;
     --surface: #ffffff; --surface-2: #f2f5fa; --line: #dce3ee; --line-2: #c9d3e3;
     --text: #131b2a; --muted: #55637a;
@@ -23,6 +24,21 @@
     --shadow: 0 1px 2px rgba(20,35,60,.06), 0 6px 18px rgba(20,35,60,.06);
   }
 }
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef2f8; --bg-glow: #dfe9f7;
+  --surface: #ffffff; --surface-2: #f2f5fa; --line: #dce3ee; --line-2: #c9d3e3;
+  --text: #131b2a; --muted: #55637a;
+  --ok: #0a7d50; --warn: #8f5a00; --bad: #c0262d; --info: #1559b8;
+  --ok-bg: #e2f5ec; --warn-bg: #fbefd6; --bad-bg: #fce6e6; --info-bg: #e2edfb;
+  --glow: 0 0 0;
+  --c0: #1559b8; --c1: #0a7d50; --c2: #a8680a; --c3: #6b3fc4; --c4: #c0357a; --c5: #55637a;
+  --shadow: 0 1px 2px rgba(20,35,60,.06), 0 6px 18px rgba(20,35,60,.06);
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+/* Density: --gap scales spacing of the main content. */
+:root { --gap: 16px; }
+:root[data-density="compact"] { --gap: 10px; }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--text); min-height: 100vh;
   background: radial-gradient(1100px 500px at 15% -10%, var(--bg-glow), transparent 70%), var(--bg);
@@ -316,3 +332,16 @@ main { padding-bottom: 56px; }
 #detail .row > .k { width: 92px; }
 #detail .charts { align-items: start; }
 .dhead .links { border-top: 0; padding-top: 0; margin-top: 0; }
+
+/* prefs + density */
+.side .prefs { margin-top: auto; display: grid; gap: 8px; padding: 0 6px; }
+.side .prefs .seg { display: flex; }
+.side .prefs .seg button { flex: 1; padding: 5px 4px; font-size: 12px; }
+.side .age { margin-top: 0; }
+.cards, .charts { gap: var(--gap); }
+.todo ul { gap: calc(var(--gap) / 2.5); }
+:root[data-density="compact"] .content { padding-top: 18px; }
+:root[data-density="compact"] .todo-item { padding: 5px 12px; }
+:root[data-density="compact"] .stats li { padding: 7px 12px; }
+:root[data-density="compact"] .mini-table th, :root[data-density="compact"] .mini-table td,
+:root[data-density="compact"] .tablewrap td, :root[data-density="compact"] .tablewrap th { padding-top: 4px; padding-bottom: 4px; }

@@ -22,6 +22,7 @@ Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is Ger
 ## Conventions
 - Layout: sidebar nav (`#nav`, `data-pg`) switches `.page[data-page]` sections: overview, projects, prs, stats, system. Route is `pg=` in the URL hash.
 - Self-check: only the card whose `site.url` origin == `location.origin` is probed in the browser (`./healthz`, `./version.txt`, `selfCheck()` in app.js). Never probe other sites. `site.checked === false` is shown as "nicht vom Home-Server prüfbar", not as down.
+- Theme (`data-theme`) and density (`data-density`) are device prefs in localStorage; tab title shows `(n)` needs-attention count, favicon colour = overall level.
 - Read-only: no buttons that trigger anything, only links (new tab).
 - Render with `textContent`/DOM, never innerHTML. Dark and light via `prefers-color-scheme`.
 - Phases: 1 skeleton + states, 2 design polish; each its own PR with label `manual-review`.

@@ -1,51 +1,28 @@
-# TODO: project name
-
-> **First session:** the TODOs below are still open. Ask the owner what is unclear, fill them
-> in, delete this note and open a PR. Keep this file under 60 lines. Tools, MCPs and box rules
-> are in the global box CLAUDE.md, don't repeat them here.
-
-## Demo content
-`public/`, `Dockerfile` and `nginx.conf` are a placeholder static site that already satisfies the
-contract below and keeps CI green. Replace them with the real project (or adapt them), then delete
-this section.
+# cockpit
 
 ## Purpose
-TODO: what this project is, for whom, and the production URL.
+Static dashboard of the home server (boxes, repos, sites). Tailnet only: http://cockpit.seitenschwung.com.
+Brief and schema: `~/inbox/BRIEF.md`, `~/inbox/SCHEMA.md` (status.json schema 1). Don't deviate from the
+schema; a missing field goes into the PR text, the owner extends the collector.
 
 ## Stack
-TODO: language, framework, database, notable libraries.
+Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is German.
 
 ## Commands
-- Install: TODO
-- Dev server: TODO (listen on 0.0.0.0 so `dev expose` works)
-- Tests: TODO
-- Build: TODO
+- Dev server: `cd public && python3 -m http.server 8090 --bind 0.0.0.0`
+- `?now=<ISO>` pins the clock (sample data is old, otherwise it shows "Sammler hängt").
+- No npm, no tests; CI builds the Dockerfile and crawls `/` (axe, Lighthouse).
 
 ## Layout
-TODO: the few folders that matter.
-
-## CI and deploy contract
-`.github/workflows/ci.yml` is a thin caller of the shared pipeline in `seitenschwung/template`,
-managed by the owner. You can't change workflow files, so build the project to fit it:
-- If `package-lock.json` exists, CI runs `npm ci`, then `npm run lint`, `npm test` and
-  `npm run build` when those scripts exist. Keep them green locally before pushing.
-- If a `Dockerfile` exists, CI builds it and runs the image hardened: read-only root
-  filesystem, `/tmp` as the only writable path, no capabilities, as the image's (non-root)
-  user. The image must:
-  - listen on port **8080**
-  - answer `GET /healthz` with 200
-  - serve `GET /version.txt` with the build argument `APP_VERSION` (the commit SHA)
-- If `/` returns HTML, CI also crawls the site with Playwright, axe (WCAG AA, serious and
-  critical findings fail) and Lighthouse (accessibility, best practices and SEO at least 90).
-- A Dockerfile stage named `test` (`FROM ... AS test`) is built first: put lint and tests there for
-  stacks without `package-lock.json`. It must not be the last stage.
-- `docker-compose.yml` keeps the CrowdSec labels (`crowdsec.enable=true`,
-  `crowdsec.labels.type=nginx`) and the json-file log rotation on every service that serves traffic.
-  The CrowdSec agent on the server reads the container logs through them. Don't remove them; the
-  type must match a parser there, so ask the owner before changing it.
-- `docker-compose.yml` is what Coolify runs. Keep `image: ${IMAGE}`: the pipeline pushes
-  the tested image to ghcr.io and tells Coolify which tag to run.
-- `main` is production: every merge deploys after green CI. Work on branches, open PRs.
+- `public/index.html`, `style.css`, `app.js`: the UI; reads only `./status.json` every 15 s.
+- `public/status.json`: fake sample data (copy of `~/inbox/status.sample.json`). Never commit real data.
+- `Dockerfile`, `nginx.conf`: template for CI only; production serves `public/` directly.
 
 ## Conventions
-TODO: code style, language of the UI, anything the owner insists on.
+- Read-only: no buttons that trigger anything, only links (new tab).
+- Render with `textContent`/DOM, never innerHTML. Dark and light via `prefers-color-scheme`.
+- Phases: 1 skeleton + states, 2 design polish; each its own PR with label `manual-review`.
+
+## CI and deploy contract
+See the Dockerfile header: port 8080, `/healthz`, `/version.txt`, non-root. Keep CrowdSec labels in
+`docker-compose.yml`. `main` deploys after green CI.

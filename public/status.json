@@ -1,0 +1,443 @@
+{
+ "schema": 1,
+ "generated_at": "2026-10-23T11:30:00+00:00",
+ "took_ms": 7817,
+ "host": [
+  {
+   "name": "proxy",
+   "level": "ok",
+   "text": "egress proxy running"
+  },
+  {
+   "name": "image",
+   "level": "ok",
+   "text": "box image built 2 d ago"
+  },
+  {
+   "name": "tokens",
+   "level": "ok",
+   "text": "token timer active"
+  },
+  {
+   "name": "disk /tank/code/sites",
+   "level": "ok",
+   "text": "disk /tank/code/sites at 33%"
+  },
+  {
+   "name": "disk /mnt/hdd",
+   "level": "warn",
+   "text": "disk /mnt/hdd at 84%"
+  },
+  {
+   "name": "disk /",
+   "level": "ok",
+   "text": "disk / at 33%"
+  }
+ ],
+ "boxes": [
+  {
+   "project": "bakery",
+   "repo": "example-org/bakery",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok"
+  },
+  {
+   "project": "fotostudio",
+   "repo": "example-org/fotostudio",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/gallery-webp",
+   "uncommitted": 2,
+   "unpushed": 0,
+   "notes": [],
+   "level": "ok"
+  },
+  {
+   "project": "verein",
+   "repo": "example-org/verein",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "claude/kontaktformular",
+   "uncommitted": 0,
+   "unpushed": 3,
+   "notes": [],
+   "level": "ok"
+  },
+  {
+   "project": "portfolio",
+   "repo": "example-org/portfolio",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": false,
+   "token_ok": true,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [
+    "not logged in"
+   ],
+   "level": "warn"
+  },
+  {
+   "project": "weinbau",
+   "repo": "example-org/weinbau",
+   "running": false,
+   "old_image": false,
+   "selftest": null,
+   "logged_in": null,
+   "token_ok": null,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [
+    "stopped"
+   ],
+   "level": "warn"
+  },
+  {
+   "project": "yoga-studio",
+   "repo": "example-org/yoga-studio",
+   "running": true,
+   "old_image": true,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [
+    "old image (dev recreate)"
+   ],
+   "level": "warn"
+  },
+  {
+   "project": "tischlerei",
+   "repo": "example-org/tischlerei",
+   "running": true,
+   "old_image": false,
+   "selftest": "ok",
+   "logged_in": true,
+   "token_ok": false,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [
+    "bot token expired"
+   ],
+   "level": "bad"
+  },
+  {
+   "project": "kanzlei",
+   "repo": "example-org/kanzlei",
+   "running": true,
+   "old_image": false,
+   "selftest": "fail",
+   "logged_in": true,
+   "token_ok": true,
+   "branch": "main",
+   "uncommitted": 0,
+   "unpushed": 0,
+   "notes": [
+    "SANDBOX: example.com reachable (expected blocked)"
+   ],
+   "level": "bad"
+  }
+ ],
+ "repos": [
+  {
+   "repo": "example-org/bakery",
+   "url": "https://github.com/example-org/bakery",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/bakery/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://bakery.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/fotostudio",
+   "url": "https://github.com/example-org/fotostudio",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/fotostudio/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "deploying",
+   "prs": [
+    {
+     "number": 14,
+     "title": "Gallery as WebP, lazy loading",
+     "url": "https://github.com/example-org/x/pull/14",
+     "draft": false,
+     "labels": [
+      "manual-review"
+     ],
+     "author": "app/philipp-claude-bot",
+     "created_at": "2026-10-23T09:12:00Z",
+     "ci": "green"
+    }
+   ],
+   "site": {
+    "url": "https://fotostudio.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok",
+   "active_run": {
+    "url": "https://github.com/example-org/fotostudio/actions/runs/2",
+    "title": "Gallery as WebP",
+    "started_at": "2026-10-23T11:27:40Z"
+   }
+  },
+  {
+   "repo": "example-org/verein",
+   "url": "https://github.com/example-org/verein",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/verein/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "ci_running",
+   "prs": [
+    {
+     "number": 7,
+     "title": "Contact form with spam protection",
+     "url": "https://github.com/example-org/x/pull/7",
+     "draft": false,
+     "labels": [],
+     "author": "app/philipp-claude-bot",
+     "created_at": "2026-10-23T09:12:00Z",
+     "ci": "running"
+    },
+    {
+     "number": 6,
+     "title": "Docs: CLAUDE.md",
+     "url": "https://github.com/example-org/x/pull/6",
+     "draft": false,
+     "labels": [],
+     "author": "app/philipp-claude-bot",
+     "created_at": "2026-10-23T09:12:00Z",
+     "ci": "green"
+    },
+    {
+     "number": 5,
+     "title": "Draft: new events page",
+     "url": "https://github.com/example-org/x/pull/5",
+     "draft": true,
+     "labels": [],
+     "author": "app/philipp-claude-bot",
+     "created_at": "2026-10-23T09:12:00Z",
+     "ci": "none"
+    }
+   ],
+   "site": {
+    "url": "https://verein.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok",
+   "active_run": {
+    "url": "https://github.com/example-org/verein/actions/runs/3",
+    "title": "Contact form",
+    "started_at": "2026-10-23T11:29:10Z"
+   }
+  },
+  {
+   "repo": "example-org/portfolio",
+   "url": "https://github.com/example-org/portfolio",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/portfolio/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": null,
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/weinbau",
+   "url": "https://github.com/example-org/weinbau",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/weinbau/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://weinbau.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "bad"
+  },
+  {
+   "repo": "example-org/yoga-studio",
+   "url": "https://github.com/example-org/yoga-studio",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/yoga-studio/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://yoga-studio.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "warn"
+  },
+  {
+   "repo": "example-org/tischlerei",
+   "url": "https://github.com/example-org/tischlerei",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "failure",
+     "title": "Update dependencies",
+     "url": "https://github.com/example-org/tischlerei/actions/runs/4",
+     "created_at": "2026-10-23T08:02:00Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [
+    {
+     "number": 21,
+     "title": "Fix broken image paths on mobile",
+     "url": "https://github.com/example-org/x/pull/21",
+     "draft": false,
+     "labels": [],
+     "author": "app/philipp-claude-bot",
+     "created_at": "2026-10-23T09:12:00Z",
+     "ci": "red"
+    }
+   ],
+   "site": {
+    "url": "https://tischlerei.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "bad"
+  },
+  {
+   "repo": "example-org/kanzlei",
+   "url": "https://github.com/example-org/kanzlei",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/kanzlei/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://kanzlei.example.com",
+    "up": true,
+    "http_status": 200,
+    "ms": 152,
+    "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "current": true,
+    "level": "ok"
+   },
+   "level": "ok"
+  }
+ ],
+ "summary": {
+  "ok": 13,
+  "warn": 5,
+  "bad": 4,
+  "open_prs": 5,
+  "deploying": 1
+ }
+}

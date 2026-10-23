@@ -150,12 +150,16 @@ function renderCard(p) {
   const rows = el('div', 'rows');
   if (repo) {
     const s = repo.site;
-    if (s) {
+    if (s && s.checked === false) {
+      // The home server can't reach this site (up/ms/version are null): not an outage.
+      rows.append(row('Seite', el('span', 'muted', 'nicht vom Home-Server prüfbar' + (s.note ? ' · ' + s.note : ''))));
+    } else if (s) {
       const v = [];
       v.push(el('span', s.up ? 'good' : 'badc', s.up ? 'live' : 'nicht erreichbar'));
       if (s.up) v.push(el('span', 'muted num', ' · ' + s.ms + ' ms'));
       if (s.up && s.current === false) v.push(el('span', 'warned', ' · neuester Stand noch nicht live'));
       else if (s.up && s.current) v.push(el('span', 'muted', ' · neuester Stand live'));
+      if (s.browser) v.push(el('span', 'muted', ' · im Browser geprüft'));
       rows.append(row('Seite', ...v));
     } else {
       rows.append(row('Seite', el('span', 'muted', 'keine')));
@@ -293,7 +297,7 @@ function merge(d) {
     names.set(r.repo, e);
   }
   const list = [...names.values()];
-  for (const p of list) p.level = worst(p.box && p.box.level, p.repo && p.repo.level);
+  for (const p of list) p.level = worst(p.box && p.box.level, p.repo && p.repo.level, p.repo && p.repo.site && p.repo.site.browser ? p.repo.site.level : null);
   list.sort(SORTS[sortKey] || SORTS.status);
   return list;
 }
@@ -369,11 +373,45 @@ function render() {
   }));
 }
 
+// The collector can't reach the cockpit's own host, so the browser checks its own origin (same origin, no CORS).
+// Other sites are never probed from here.
+async function selfCheck(d) {
+  for (const r of d.repos) {
+    const s = r.site;
+    let own = false;
+    try { own = !!s && new URL(s.url).origin === location.origin; } catch (e) { /* bad url */ }
+    if (!own) continue;
+    const opts = { cache: 'no-store', credentials: 'omit', signal: AbortSignal.timeout(5000) };
+    const t0 = performance.now();
+    let up = false, version = null;
+    try {
+      up = (await fetch('./healthz', opts)).ok;
+      s.ms = Math.round(performance.now() - t0);
+    } catch (e) { up = false; }
+    if (up) {
+      try {
+        const v = await fetch('./version.txt', opts);
+        if (v.ok) version = (await v.text()).trim() || null;
+      } catch (e) { /* version unknown */ }
+    }
+    s.checked = true;
+    s.browser = true;
+    s.up = up;
+    s.http_status = up ? 200 : null;
+    s.version = version;
+    s.current = version && r.main ? version === r.main.sha : null;
+    s.level = !up ? 'bad' : s.current === false && r.activity === 'idle' ? 'warn' : 'ok';
+    delete s.note;
+  }
+}
+
 async function load() {
   try {
     const res = await fetch(DATA_URL, { cache: 'no-store', credentials: 'omit' });
     if (!res.ok) throw new Error(res.status);
-    data = await res.json();
+    const d = await res.json();
+    await selfCheck(d);
+    data = d;
     fetchFailed = false;
   } catch (e) {
     fetchFailed = true;

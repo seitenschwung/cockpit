@@ -15,12 +15,13 @@ Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is Ger
 
 ## Layout
 - `public/index.html`, `style.css`, `app.js` (state, cards, `ui` object synced to URL hash, pages via `ui.pg`), `charts.js` (token/resource/egress charts, filters, table view): the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` on localhost/CI, else the home server's URL (CORS, no credentials).
+- `public/activity.js`: Aktivität page (host/box curves as inline SVG, disks, deploys, sites, costs). Loaded before app.js on purpose (app.js renders at once; a late script races).
 - `public/detail.js`: project detail page (`pg=project&p=<name>`), reuses `projectRows`, `boxStats`, `prList` from app.js.
 - `public/status.json`: fake sample data (copy of `~/inbox/status.sample.json`). Never commit real data.
 - `Dockerfile`, `nginx.conf`: the image Coolify runs on the VPS (also what CI tests).
 
 ## Conventions
-- Layout: sidebar nav (`#nav`, `data-pg`) switches `.page[data-page]` sections: overview, projects, prs, stats, system. Route is `pg=` in the URL hash.
+- Layout: sidebar nav (`#nav`, `data-pg`) switches `.page[data-page]` sections: overview, projects, prs, stats, activity, system. Route is `pg=` in the URL hash.
 - Self-check: only the card whose `site.url` origin == `location.origin` is probed in the browser (`./healthz`, `./version.txt`, `selfCheck()` in app.js). Never probe other sites. `site.checked === false` is shown as "nicht vom Home-Server prüfbar", not as down.
 - Theme (`data-theme`) and density (`data-density`) are device prefs in localStorage; tab title shows `(n)` needs-attention count, favicon colour = overall level.
 - Read-only: no buttons that trigger anything, only links (new tab).

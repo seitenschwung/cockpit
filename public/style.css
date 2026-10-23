@@ -76,7 +76,7 @@ h1, h2, h3, p { margin: 0; }
   .side .age { margin: 0 0 0 auto; }
   .content { padding: 18px 14px 40px; }
 }
-@media (max-width: 440px) { #nav { flex-wrap: nowrap; } #nav button { font-size: 13px; padding: 8px 7px; gap: 5px; } #nav svg { width: 16px; height: 16px; } }
+@media (max-width: 440px) { #nav button { font-size: 13px; padding: 8px 7px; gap: 5px; } #nav svg { width: 16px; height: 16px; } }
 
 /* header */
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; font-size: 17px; letter-spacing: -.01em; }
@@ -358,3 +358,34 @@ main { padding-bottom: 56px; }
 .hostlist .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hostlist .v { color: var(--muted); white-space: nowrap; }
 .bars.cmp .barrow { grid-template-columns: 84px minmax(60px, 1fr) 64px 92px; }
+
+/* activity page */
+.plot.line { width: 100%; height: 120px; display: block; }
+.curve.small .plot.line { height: 36px; }
+.plot.line .ln { stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.plot.line .ln.c0 { stroke: var(--c0); } .plot.line .ln.c1 { stroke: var(--c1); }
+.axisnote { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: 8px; font-size: 13px; }
+.facts .k { color: var(--muted); margin-right: 6px; }
+.keys { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.key .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
+.sw.c0 { background: var(--c0); } .sw.c1 { background: var(--c1); }
+.disks, .sites { display: grid; gap: 14px; }
+.sites { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.disks li, .sites li { display: grid; gap: 4px; }
+.disks .h, .bc .h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.disks .txt, .bc .txt { color: var(--muted); font-variant-numeric: tabular-nums; }
+.sites .txt { font-size: 12.5px; }
+.bad-text { color: var(--bad); font-weight: 600; }
+.boxcurves { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px 18px; }
+.bc .h { justify-content: space-between; margin-bottom: 4px; }
+.bc .plot.line { height: 56px; }
+button.plain { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--text); cursor: pointer; }
+button.plain:hover { text-decoration: underline; }
+.costcols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 28px; }
+.costcols h3 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.mini-table .total th, .mini-table .total td { font-weight: 600; border-top: 1px solid var(--line-2); }
+.mini-table .muted { color: var(--muted); }
+#activity .empty { color: var(--muted); font-size: 13px; }
+.flag.ok { color: var(--ok); } .flag.warn { color: var(--warn); }
+.costcols > * { min-width: 0; } .costcols .mini-table th, .costcols .mini-table td { white-space: normal; } @media (max-width: 760px) { .costcols .mini-table th[scope=row] { width: 55%; } }

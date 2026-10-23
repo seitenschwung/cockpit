@@ -128,6 +128,30 @@ function renderCard(p) {
   return card;
 }
 
+function donut(s) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+  const total = s.ok + s.warn + s.bad;
+  const svg = mk('svg', { viewBox: '0 0 100 100', 'aria-hidden': 'true' });
+  const C = 2 * Math.PI * 40;
+  svg.append(mk('circle', { cx: 50, cy: 50, r: 40, fill: 'none', stroke: 'var(--line)', 'stroke-width': 10 }));
+  let offset = 0;
+  for (const [n, col] of [[s.ok, 'var(--ok)'], [s.warn, 'var(--warn)'], [s.bad, 'var(--bad)']]) {
+    if (!n || !total) continue;
+    const len = (n / total) * C;
+    svg.append(mk('circle', { cx: 50, cy: 50, r: 40, fill: 'none', stroke: col, 'stroke-width': 10,
+      'stroke-dasharray': len + ' ' + (C - len), 'stroke-dashoffset': -offset, transform: 'rotate(-90 50 50)' }));
+    offset += len;
+  }
+  const pct = total ? Math.round((s.ok / total) * 100) : 0;
+  const t1 = mk('text', { x: 50, y: 53, 'text-anchor': 'middle', class: 'n' });
+  t1.textContent = pct + '%';
+  const t2 = mk('text', { x: 50, y: 65, 'text-anchor': 'middle', class: 'l' });
+  t2.textContent = 'gesund';
+  svg.append(t1, t2);
+  return svg;
+}
+
 function merge(d) {
   const names = new Map();
   for (const b of d.boxes) names.set(b.repo, { name: b.project, box: b });
@@ -152,6 +176,8 @@ function render() {
     $('verdict').textContent = 'Keine Daten';
     $('stats').replaceChildren();
     $('age').textContent = '';
+    $('sub').textContent = '';
+    $('donut').replaceChildren();
     $('cards').replaceChildren();
     $('host').replaceChildren();
     notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
@@ -172,9 +198,12 @@ function render() {
   top.dataset.level = level;
   $('verdict').textContent = { ok: 'Alles gut', warn: 'Warnungen', bad: 'Fehler' }[level];
 
-  const stat = (n, label) => { const li = el('li'); li.append(el('b', null, String(n)), el('span', null, label)); return li; };
+  const stat = (n, label, cls) => { const li = el('li', cls); li.append(el('b', null, String(n)), el('span', null, label)); return li; };
   $('stats').replaceChildren(
-    stat(s.bad, 'Fehler'), stat(s.warn, 'Warnungen'), stat(s.open_prs, 'offene PRs'), stat(s.deploying, 'laufende Deploys'));
+    stat(s.bad, 'Fehler', s.bad ? 'bad' : ''), stat(s.warn, 'Warnungen', s.warn ? 'warn' : ''),
+    stat(s.open_prs, 'offene PRs', ''), stat(s.deploying, 'laufende Deploys', s.deploying ? 'info' : ''));
+  $('sub').textContent = s.ok + ' von ' + (s.ok + s.warn + s.bad) + ' Prüfungen in Ordnung';
+  $('donut').replaceChildren(donut(s));
   $('age').textContent = 'Stand vor ' + ago(age);
 
   notice.textContent = msgs.join(' ');
@@ -185,7 +214,16 @@ function render() {
 
   $('host').replaceChildren(...data.host.map((h) => {
     const li = el('li');
-    li.append(el('span', 'dot ' + h.level), el('b', null, h.name), el('span', 'muted', h.text));
+    const head = el('div', 'h');
+    head.append(el('span', 'dot ' + h.level), el('b', null, h.name));
+    li.append(head, el('span', 'txt', h.text));
+    const pct = /(\d{1,3})\s*%/.exec(h.text);
+    if (pct) {
+      const m = el('meter', h.level);
+      m.min = 0; m.max = 100; m.value = Math.min(100, +pct[1]);
+      m.setAttribute('aria-label', h.name + ' ' + pct[1] + ' %');
+      li.append(m);
+    }
     return li;
   }));
 }

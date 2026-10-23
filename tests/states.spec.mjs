@@ -105,3 +105,31 @@ test('Back button and manual hash change switch pages', async ({ page }) => {
   await page.evaluate(() => { location.hash = 'pg=prs'; });
   await expect(page.locator('[data-page="prs"]')).toBeVisible();
 });
+
+test('activity page renders the new collector fields', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await open(page, () => {}, '#pg=activity');
+  await expect(page.locator('#activity .boxcurves .bc').first()).toBeVisible();
+  await expect(page.locator('#activity')).toContainText('Letzte Deploys');
+  await expect(page.locator('#activity')).toContainText('API-Gegenwert (nicht bezahlt)');
+  await expect(page.locator('#activity')).toContainText('nicht eingetragen');
+  await expect(page.locator('#activity')).toContainText('Bisher bekannt (unvollständig)');
+  expect(errors).toEqual([]);
+});
+
+test('activity page copes with missing and short series', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await open(page, (d) => {
+    d.host_metrics = null;
+    d.disks = [];
+    d.deploys = [];
+    d.costs = null;
+    for (const b of d.boxes) b.history = null;
+    for (const r of d.repos) if (r.site) { r.site.checked = true; r.site.uptime_24h = null; r.site.tracked_since = '2026-10-23T14:40:00Z'; r.site.down_since = null; }
+  }, '#pg=activity');
+  await expect(page.locator('#activity')).toContainText('Keine Host-Daten.');
+  await expect(page.locator('#activity')).toContainText('noch zu wenig Daten');
+  expect(errors).toEqual([]);
+});

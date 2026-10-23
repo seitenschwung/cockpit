@@ -260,7 +260,7 @@ function store(k, v) {
 }
 // UI state lives in the URL hash (#f=problems&q=x&v=table&s=ram&r=3&m=out), so views can be shared and bookmarked.
 const pick = (v, ok, d) => (ok.includes(v) ? v : d);
-const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', project: 'Projekt', stats: 'Statistik', system: 'System' };
+const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', project: 'Projekt', stats: 'Statistik', activity: 'Aktivität', system: 'System' };
 const ui = {};
 let sortKey = 'status';
 function readHash() {
@@ -404,6 +404,7 @@ function render() {
     $('prsub').textContent = '';
     $('prcount').textContent = '';
     renderInsights(null);
+    renderActivity(null);
     $('host').replaceChildren();
     $('collector').replaceChildren();
     notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
@@ -456,6 +457,7 @@ function render() {
   setTitle(level);
   renderControls(all, shown);
   renderInsights(all);
+  renderActivity(all);
 
   $('host').replaceChildren(...data.host.map((h) => {
     const li = el('li');

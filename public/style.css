@@ -316,3 +316,15 @@ main { padding-bottom: 56px; }
 #detail .row > .k { width: 92px; }
 #detail .charts { align-items: start; }
 .dhead .links { border-top: 0; padding-top: 0; margin-top: 0; }
+
+.eg-total { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 12px; }
+.eg-total li { display: flex; flex-direction: column; min-width: 96px; }
+.eg-total b { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.eg-total span { font-size: 12px; color: var(--muted); }
+.eg-total .bad b { color: var(--bad); }
+.hostlist { display: grid; gap: 2px; font-size: 13px; }
+.hostlist li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 6px; border-radius: 6px; }
+.hostlist li:nth-child(odd) { background: var(--surface-2); }
+.hostlist .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hostlist .v { color: var(--muted); white-space: nowrap; }
+.bars.cmp .barrow { grid-template-columns: 84px minmax(60px, 1fr) 64px 92px; }

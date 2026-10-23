@@ -396,9 +396,45 @@ function egressChart(all) {
   }));
 }
 
+// 7-day comparison per project, uses the metric picked above the token chart.
+function compareChart(all) {
+  const metric = METRICS[ui.m], days = dayList(7), today = days[days.length - 1];
+  const rows = all.filter((p) => p.box && p.box.claude && p.box.claude.days).map((p) => {
+    const by = new Map(p.box.claude.days.map((d) => [d.date, metric.get(d)]));
+    return { p, total: days.reduce((a, d) => a + (by.get(d) || 0), 0), today: by.get(today) || 0 };
+  }).filter((r) => r.total > 0).sort((a, b) => b.total - a.total || a.p.name.localeCompare(b.p.name)).slice(0, 8);
+  $('compare-sub').textContent = metric.label + ' pro Projekt, rechts der Wert von heute';
+  const list = $('chart-compare');
+  if (!rows.length) { list.replaceChildren(el('li', 'empty', 'Keine Token-Daten in 7 Tagen.')); return; }
+  const max = rows[0].total;
+  list.replaceChildren(...rows.map((r) => barRow(r.p, axisNum(r.total, ui.m), r.total / max, 'info', el('span', 'flag', 'heute ' + axisNum(r.today, ui.m)))));
+}
+
+// Egress summed over all boxes; denied hosts merged by name.
+function egressTotal(all) {
+  const boxes = all.filter((p) => p.box && p.box.egress);
+  const sum = (k) => boxes.reduce((a, p) => a + (p.box.egress[k] || 0), 0);
+  const stat = (n, label, cls) => { const li = el('li', cls); li.append(el('b', null, fmtInt.format(n)), el('span', null, label)); return li; };
+  const denied = sum('denied_1h');
+  $('egress-total').replaceChildren(stat(sum('requests_1h'), 'Anfragen', ''), stat(denied, 'blockiert', denied ? 'bad' : ''), stat(sum('expected_denied_1h'), 'erwartet blockiert', ''));
+  const hosts = new Map();
+  for (const p of boxes) for (const h of p.box.egress.denied_hosts || []) {
+    const e = hosts.get(h.host) || { count: 0, boxes: new Set() };
+    e.count += h.count;
+    e.boxes.add(p.name);
+    hosts.set(h.host, e);
+  }
+  const top = [...hosts].sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0])).slice(0, 6);
+  $('egress-hosts').replaceChildren(...(top.length ? top.map(([host, e]) => {
+    const li = el('li');
+    li.append(el('span', 'nm', host), el('span', 'v num', '× ' + fmtInt.format(e.count) + ' · ' + e.boxes.size + (e.boxes.size === 1 ? ' Box' : ' Boxen')));
+    return li;
+  }) : [el('li', 'empty', 'Keine blockierten Ziele.')]));
+}
+
 function renderInsights(all) {
   if (!all) {
-    for (const id of ['chart-tokens', 'legend', 'chart-res', 'chart-egress']) $(id).replaceChildren();
+    for (const id of ['chart-tokens', 'legend', 'chart-res', 'chart-egress', 'chart-compare', 'egress-total', 'egress-hosts']) $(id).replaceChildren();
     $('tokens-sub').textContent = '';
     return;
   }
@@ -407,6 +443,8 @@ function renderInsights(all) {
   tokenChart(all);
   resChart(all);
   egressChart(all);
+  compareChart(all);
+  egressTotal(all);
 }
 
 // ---- events (delegated, the DOM is rebuilt on every render) ----

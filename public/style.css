@@ -297,3 +297,22 @@ main { padding-bottom: 56px; }
 .todo-item a { font-size: 13px; color: var(--muted); white-space: nowrap; }
 .todo-item .proj { font: inherit; font-weight: 650; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
 .todo-item .proj:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 4px; }
+
+/* project detail */
+.back { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 4px 0; margin-bottom: 8px; cursor: pointer; }
+.back:hover { color: var(--text); }
+.back:focus-visible, .card .detail:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 4px; }
+.dhead { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 18px; }
+.dhead .pagetitle { margin: 0; }
+.dhead .links { margin-left: auto; }
+#detail .panel > header { margin-bottom: 8px; }
+#detail .panel > * + * { margin-top: 10px; }
+.card .detail { font: inherit; font-size: 13px; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mini-table th, .mini-table td { padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--line); font-weight: 400; }
+.mini-table thead th { color: var(--muted); font-size: 12px; }
+.mini-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.hosts { display: grid; gap: 2px; font-size: 13px; color: var(--muted); }
+#detail .row > .k { width: 92px; }
+#detail .charts { align-items: start; }
+.dhead .links { border-top: 0; padding-top: 0; margin-top: 0; }

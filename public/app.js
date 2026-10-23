@@ -130,21 +130,15 @@ function boxStats(box) {
   return wrap.childNodes.length ? wrap : null;
 }
 
-function renderCard(p) {
+function projectRows(p) {
   const { box, repo } = p;
-  const card = el('article', 'card');
-  card.dataset.level = p.level;
-
-  const head = el('div', 'card-head');
-  head.append(el('h2', null, p.name), el('span', 'lvl ' + p.level, LABEL[p.level]));
-  card.append(head);
-
+  const out = [];
   if (repo && repo.activity !== 'idle') {
     const a = el('div', 'activity ' + repo.activity);
     a.append(el('span', 'spin'));
     const txt = repo.activity === 'deploying' ? 'Deploy läuft' : 'CI läuft';
     a.append(repo.active_run ? link(repo.active_run.url, txt + ': ' + repo.active_run.title) : el('span', null, txt));
-    card.append(a);
+    out.push(a);
   }
 
   const rows = el('div', 'rows');
@@ -181,24 +175,39 @@ function renderCard(p) {
     if (box.unpushed) bv.push(el('span', 'warned', ' · ' + box.unpushed + ' unpushed'));
     rows.append(row('Box', ...bv));
   }
-  card.append(rows);
+  out.push(rows);
+  return out;
+}
+
+function prList(repo) {
+  const prs = el('ul', 'prs');
+  for (const pr of repo.prs) {
+    const li = el('li', 'pr');
+    const t = el('span', 't');
+    t.append(link(pr.url, '#' + pr.number + ' ' + pr.title));
+    li.append(t);
+    if (pr.draft) li.append(el('span', 'chip', 'Entwurf'));
+    for (const l of pr.labels) li.append(el('span', 'chip' + (l === 'manual-review' ? ' review' : ''), l));
+    const cit = { green: 'CI grün', red: 'CI rot', running: 'CI läuft', none: 'kein CI' }[pr.ci] || pr.ci;
+    li.append(el('span', 'chip ' + pr.ci, cit));
+    prs.append(li);
+  }
+  return prs;
+}
+
+function renderCard(p) {
+  const { box, repo } = p;
+  const card = el('article', 'card');
+  card.dataset.level = p.level;
+
+  const head = el('div', 'card-head');
+  head.append(el('h2', null, p.name), el('span', 'lvl ' + p.level, LABEL[p.level]));
+  card.append(head);
+
+  card.append(...projectRows(p));
   if (box && box.running !== false) { const bs = boxStats(box); if (bs) card.append(bs); }
 
-  if (repo && repo.prs.length) {
-    const prs = el('ul', 'prs');
-    for (const pr of repo.prs) {
-      const li = el('li', 'pr');
-      const t = el('span', 't');
-      t.append(link(pr.url, '#' + pr.number + ' ' + pr.title));
-      li.append(t);
-      if (pr.draft) li.append(el('span', 'chip', 'Entwurf'));
-      for (const l of pr.labels) li.append(el('span', 'chip' + (l === 'manual-review' ? ' review' : ''), l));
-      const cit = { green: 'CI grün', red: 'CI rot', running: 'CI läuft', none: 'kein CI' }[pr.ci] || pr.ci;
-      li.append(el('span', 'chip ' + pr.ci, cit));
-      prs.append(li);
-    }
-    card.append(prs);
-  }
+  if (repo && repo.prs.length) card.append(prList(repo));
 
   if (box && box.notes.length) {
     const notes = el('ul', 'notes');
@@ -207,6 +216,10 @@ function renderCard(p) {
   }
 
   const links = el('div', 'links');
+  const det = el('button', 'detail', 'Details');
+  det.type = 'button';
+  det.dataset.p = p.name;
+  links.append(det);
   if (repo) {
     links.append(link(repo.url, 'Repo'));
     if (repo.main.ci && repo.main.ci.url) links.append(link(repo.main.ci.url, 'CI-Lauf'));
@@ -248,10 +261,11 @@ function store(k, v) {
 // UI state lives in the URL hash (#f=problems&q=x&v=table&s=ram&r=3&m=out), so views can be shared and bookmarked.
 const hp = new URLSearchParams(location.hash.slice(1));
 const pick = (v, ok, d) => (ok.includes(v) ? v : d);
-const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', stats: 'Statistik', system: 'System' };
+const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', project: 'Projekt', stats: 'Statistik', system: 'System' };
 const ui = {
   pg: pick(hp.get('pg'), Object.keys(PAGES), 'overview'),
   f: pick(hp.get('f'), ['all', 'problems', 'working', 'prs', 'stopped'], 'all'),
+  p: (hp.get('p') || '').slice(0, 80),
   q: (hp.get('q') || '').slice(0, 80),
   v: pick(hp.get('v'), ['cards', 'table'], 'cards'),
   r: pick(hp.get('r'), ['3', '7'], '7'),
@@ -263,6 +277,7 @@ let sortKey = hp.get('s') || store('sort') || 'status';
 function syncUrl() {
   const p = new URLSearchParams();
   if (ui.pg !== 'overview') p.set('pg', ui.pg);
+  if (ui.pg === 'project' && ui.p) p.set('p', ui.p);
   if (ui.f !== 'all') p.set('f', ui.f);
   if (ui.q) p.set('q', ui.q);
   if (ui.v !== 'cards') p.set('v', ui.v);
@@ -335,10 +350,11 @@ function merge(d) {
 
 function showPage() {
   for (const s of document.querySelectorAll('.page')) s.hidden = s.dataset.page !== ui.pg;
+  const navPg = ui.pg === 'project' ? 'projects' : ui.pg; // a project page belongs under Projekte
   for (const b of $('nav').querySelectorAll('button')) {
-    if (b.dataset.pg === ui.pg) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    if (b.dataset.pg === navPg) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
-  document.title = PAGES[ui.pg] + ' · Cockpit';
+  document.title = (ui.pg === 'project' && ui.p ? ui.p : PAGES[ui.pg]) + ' · Cockpit';
 }
 
 function render() {
@@ -357,6 +373,7 @@ function render() {
     $('cards').replaceChildren();
     $('prs').replaceChildren();
     $('todo').replaceChildren();
+    $('detail').replaceChildren();
     $('prsub').textContent = '';
     $('prcount').textContent = '';
     renderInsights(null);
@@ -406,6 +423,7 @@ function render() {
   $('cards').replaceChildren(...(ui.v === 'cards' ? shown.map(renderCard) : []));
   renderTable(shown);
   renderPrs(all);
+  renderDetail(all);
   renderTodo(all, stale);
   renderControls(all, shown);
   renderInsights(all);

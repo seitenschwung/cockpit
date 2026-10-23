@@ -126,7 +126,7 @@ function renderTodo(all, stale) {
     if (i.project) {
       const b = el('button', 'proj', i.project);
       b.type = 'button';
-      b.dataset.go = i.project;
+      b.dataset.p = i.project;
       txt.append(b, ' ');
     }
     txt.append(i.text);
@@ -218,8 +218,8 @@ function renderTable(shown) {
     name.scope = 'row';
     const go = el('button', null, p.name);
     go.type = 'button';
-    go.dataset.go = p.name;
-    go.title = 'Zur Karte springen';
+    go.dataset.p = p.name;
+    go.title = 'Projektseite öffnen';
     name.append(go);
     const st = el('td');
     st.append(el('span', 'dot ' + p.level), ' ', LABEL[p.level]);
@@ -416,6 +416,7 @@ document.addEventListener('click', (e) => {
   if (!t) return;
   const d = t.dataset;
   if (d.pg) { ui.pg = d.pg; update(); window.scrollTo(0, 0); }
+  else if (d.p) { ui.pg = 'project'; ui.p = d.p; update(); window.scrollTo(0, 0); }
   else if (d.f) { ui.f = d.f; update(); }
   else if (d.view) { ui.v = d.view; update(); }
   else if (d.metric) { ui.m = d.metric; update(); }

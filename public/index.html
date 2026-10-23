@@ -29,22 +29,72 @@
   </header>
 
   <main class="wrap">
+    <section aria-labelledby="h-insights">
+      <h2 id="h-insights">Analyse</h2>
+      <div class="charts">
+        <article class="panel wide" aria-labelledby="h-tokens">
+          <header>
+            <h3 id="h-tokens">Tokenverbrauch pro Tag</h3>
+            <div class="ctrls">
+              <div class="seg" id="metric" role="group" aria-label="Messgröße">
+                <button type="button" data-metric="out">Output</button>
+                <button type="button" data-metric="cache">Cache</button>
+                <button type="button" data-metric="turns">Turns</button>
+              </div>
+              <div class="seg" id="range" role="group" aria-label="Zeitraum">
+                <button type="button" data-range="3">3 Tage</button>
+                <button type="button" data-range="7">7 Tage</button>
+              </div>
+            </div>
+          </header>
+          <p class="panel-sub" id="tokens-sub"></p>
+          <div class="chart" id="chart-tokens"></div>
+          <div class="legend" id="legend" role="group" aria-label="Projekte ein- oder ausblenden"></div>
+        </article>
+        <article class="panel" aria-labelledby="h-res">
+          <header>
+            <h3 id="h-res">Ressourcen</h3>
+            <div class="seg" id="resmetric" role="group" aria-label="Messgröße">
+              <button type="button" data-res="ram">RAM</button>
+              <button type="button" data-res="cpu">CPU</button>
+            </div>
+          </header>
+          <p class="panel-sub">Klick springt zur Karte</p>
+          <ul class="bars" id="chart-res"></ul>
+        </article>
+        <article class="panel" aria-labelledby="h-egress">
+          <header><h3 id="h-egress">Egress, letzte Stunde</h3></header>
+          <p class="panel-sub">Anfragen pro Box, blockierte rot markiert</p>
+          <ul class="bars eg" id="chart-egress"></ul>
+        </article>
+      </div>
+    </section>
+
     <section aria-labelledby="h-projects">
       <div class="section-head">
         <h2 id="h-projects">Projekte</h2>
         <div class="tools">
+          <input type="search" id="q" placeholder="Suchen ( / )" aria-label="Projekte suchen" autocomplete="off">
+          <div class="seg" id="view" role="group" aria-label="Ansicht">
+            <button type="button" data-view="cards">Karten</button>
+            <button type="button" data-view="table">Tabelle</button>
+          </div>
           <label>Sortieren <select id="sort">
             <option value="status">Status (Probleme zuerst)</option>
             <option value="name">Name</option>
             <option value="claude">Claude-Aktivität</option>
             <option value="tokens">Tokens heute</option>
             <option value="ram">RAM</option>
+            <option value="cpu">CPU</option>
           </select></label>
           <button type="button" id="expand">Alle auf</button>
           <button type="button" id="collapse">Alle zu</button>
         </div>
       </div>
+      <div class="chips" id="chips" role="group" aria-label="Filter"></div>
+      <p class="count" id="count" aria-live="polite"></p>
       <div class="cards" id="cards"></div>
+      <div class="tablewrap" id="table" hidden></div>
     </section>
 
     <section aria-labelledby="h-host">
@@ -54,5 +104,6 @@
   </main>
 
   <script src="app.js"></script>
+  <script src="charts.js"></script>
 </body>
 </html>

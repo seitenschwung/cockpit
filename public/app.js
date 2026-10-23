@@ -245,7 +245,31 @@ function store(k, v) {
   try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { /* private mode */ }
   return null;
 }
-let sortKey = store('sort') || 'status';
+// UI state lives in the URL hash (#f=problems&q=x&v=table&s=ram&r=3&m=out), so views can be shared and bookmarked.
+const hp = new URLSearchParams(location.hash.slice(1));
+const pick = (v, ok, d) => (ok.includes(v) ? v : d);
+const ui = {
+  f: pick(hp.get('f'), ['all', 'problems', 'working', 'prs', 'stopped'], 'all'),
+  q: (hp.get('q') || '').slice(0, 80),
+  v: pick(hp.get('v'), ['cards', 'table'], 'cards'),
+  r: pick(hp.get('r'), ['3', '7'], '7'),
+  m: pick(hp.get('m'), ['out', 'cache', 'turns'], 'out'),
+  res: pick(hp.get('res'), ['ram', 'cpu'], 'ram'),
+  rev: hp.get('rev') === '1',
+};
+let sortKey = hp.get('s') || store('sort') || 'status';
+function syncUrl() {
+  const p = new URLSearchParams();
+  if (ui.f !== 'all') p.set('f', ui.f);
+  if (ui.q) p.set('q', ui.q);
+  if (ui.v !== 'cards') p.set('v', ui.v);
+  if (sortKey !== 'status') p.set('s', sortKey);
+  if (ui.rev) p.set('rev', '1');
+  if (ui.r !== '7') p.set('r', ui.r);
+  if (ui.m !== 'out') p.set('m', ui.m);
+  if (ui.res !== 'ram') p.set('res', ui.res);
+  try { history.replaceState(null, '', location.pathname + location.search + (p.toString() ? '#' + p : '')); } catch (e) { /* ignore */ }
+}
 const openState = new Map(); // card name -> user's choice; unset = open only when not ok
 const isOpen = (p) => (openState.has(p.name) ? openState.get(p.name) : p.level !== 'ok');
 const claudeRank = (p) => ({ working: 0, recent: 1, idle: 2 }[p.box && p.box.claude && p.box.claude.state] ?? 3);
@@ -255,8 +279,10 @@ const SORTS = {
   claude: (a, b) => claudeRank(a) - claudeRank(b) || a.name.localeCompare(b.name),
   tokens: (a, b) => tokensOut(b) - tokensOut(a) || a.name.localeCompare(b.name),
   ram: (a, b) => ramPct(b) - ramPct(a) || a.name.localeCompare(b.name),
+  cpu: (a, b) => cpuPct(b) - cpuPct(a) || a.name.localeCompare(b.name),
 };
 const tokensOut = (p) => (p.box && p.box.claude && p.box.claude.today && p.box.claude.today.out) || 0;
+const cpuPct = (p) => (p.box && p.box.stats && p.box.stats.cpu_pct) || 0;
 const ramPct = (p) => (p.box && p.box.stats && p.box.stats.mem_pct) || 0;
 
 // One-line summary shown in the closed card.
@@ -277,6 +303,7 @@ function miniLine(p) {
 }
 function collapsible(card, p) {
   const d = el('details', 'card');
+  d.dataset.name = p.name;
   d.dataset.level = p.level;
   d.open = isOpen(p);
   d.addEventListener('toggle', () => openState.set(p.name, d.open));
@@ -299,6 +326,7 @@ function merge(d) {
   const list = [...names.values()];
   for (const p of list) p.level = worst(p.box && p.box.level, p.repo && p.repo.level, p.repo && p.repo.site && p.repo.site.browser ? p.repo.site.level : null);
   list.sort(SORTS[sortKey] || SORTS.status);
+  if (ui.rev) list.reverse();
   return list;
 }
 
@@ -315,6 +343,7 @@ function render() {
     $('sub').textContent = '';
     $('donut').replaceChildren();
     $('cards').replaceChildren();
+    renderInsights(null);
     $('host').replaceChildren();
     notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
     notice.className = 'notice';
@@ -355,7 +384,13 @@ function render() {
   notice.className = 'notice' + (noticeLevel === 'warn' ? ' warn' : '');
   notice.hidden = !msgs.length;
 
-  $('cards').replaceChildren(...merge(data).map(renderCard));
+  const all = merge(data), shown = all.filter(matches);
+  $('cards').hidden = ui.v !== 'cards';
+  $('table').hidden = ui.v !== 'table';
+  $('cards').replaceChildren(...(ui.v === 'cards' ? shown.map(renderCard) : []));
+  renderTable(shown);
+  renderControls(all, shown);
+  renderInsights(all);
 
   $('host').replaceChildren(...data.host.map((h) => {
     const li = el('li');
@@ -420,7 +455,7 @@ async function load() {
 }
 
 $('sort').value = SORTS[sortKey] ? sortKey : 'status';
-$('sort').addEventListener('change', () => { sortKey = $('sort').value; store('sort', sortKey); render(); });
+$('sort').addEventListener('change', () => { sortKey = $('sort').value; ui.rev = false; store('sort', sortKey); syncUrl(); render(); });
 for (const [id, open] of [['expand', true], ['collapse', false]]) {
   $(id).addEventListener('click', () => {
     for (const p of merge(data)) openState.set(p.name, open);

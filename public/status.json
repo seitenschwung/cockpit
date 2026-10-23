@@ -182,7 +182,8 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
    },
    "level": "ok"
   },
@@ -222,7 +223,8 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
    },
    "level": "ok",
    "active_run": {
@@ -285,7 +287,8 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
    },
    "level": "ok",
    "active_run": {
@@ -336,7 +339,8 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
    },
    "level": "bad"
   },
@@ -363,7 +367,8 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
    },
    "level": "warn"
   },
@@ -401,7 +406,8 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
    },
    "level": "bad"
   },
@@ -428,7 +434,37 @@
     "ms": 152,
     "version": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
     "current": true,
-    "level": "ok"
+    "level": "ok",
+    "checked": true
+   },
+   "level": "ok"
+  },
+  {
+   "repo": "example-org/cockpit",
+   "url": "https://github.com/example-org/cockpit",
+   "main": {
+    "sha": "4178102d10c063a0942e4b6beb6bdd7f8f825a3b",
+    "title": "Redesign: hero section and gallery",
+    "date": "2026-10-23T10:45:07Z",
+    "ci": {
+     "conclusion": "success",
+     "title": "Redesign: hero section and gallery",
+     "url": "https://github.com/example-org/cockpit/actions/runs/1",
+     "created_at": "2026-10-23T10:45:07Z"
+    }
+   },
+   "activity": "idle",
+   "prs": [],
+   "site": {
+    "url": "https://cockpit.example.com",
+    "checked": false,
+    "up": null,
+    "http_status": null,
+    "ms": null,
+    "version": null,
+    "current": null,
+    "level": "ok",
+    "note": "Sammler erreicht diese Seite nicht, Stand vom letzten Deploy"
    },
    "level": "ok"
   }

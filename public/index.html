@@ -30,7 +30,20 @@
 
   <main class="wrap">
     <section aria-labelledby="h-projects">
-      <h2 id="h-projects">Projekte</h2>
+      <div class="section-head">
+        <h2 id="h-projects">Projekte</h2>
+        <div class="tools">
+          <label>Sortieren <select id="sort">
+            <option value="status">Status (Probleme zuerst)</option>
+            <option value="name">Name</option>
+            <option value="claude">Claude-Aktivität</option>
+            <option value="tokens">Tokens heute</option>
+            <option value="ram">RAM</option>
+          </select></label>
+          <button type="button" id="expand">Alle auf</button>
+          <button type="button" id="collapse">Alle zu</button>
+        </div>
+      </div>
       <div class="cards" id="cards"></div>
     </section>
 

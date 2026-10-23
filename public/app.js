@@ -120,7 +120,7 @@ function boxStats(box) {
   const e = box.egress;
   if (e && e.denied_1h > 0) {
     const d = el('details', 'egress');
-    d.append(el('summary', 'warned', e.denied_1h + ' blockiert (letzte Stunde)'));
+    d.append(el('summary', 'muted', e.denied_1h + ' Anfragen blockiert (1 h)'));
     const ul = el('ul');
     for (const h of e.denied_hosts || []) ul.append(el('li', 'num', h.host + ' × ' + h.count));
     if (e.expected_denied_1h) ul.append(el('li', 'muted', e.expected_denied_1h + ' erwartet blockiert (nicht gezählt)'));
@@ -209,7 +209,7 @@ function renderCard(p) {
     if (repo.site) links.append(link(repo.site.url, 'Seite'));
   }
   card.append(links);
-  return card;
+  return collapsible(card, p);
 }
 
 function donut(s) {
@@ -236,6 +236,54 @@ function donut(s) {
   return svg;
 }
 
+// ---- compact collapsible cards + sorting (state is UI-only, kept in memory and localStorage) ----
+function store(k, v) {
+  try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { /* private mode */ }
+  return null;
+}
+let sortKey = store('sort') || 'status';
+const openState = new Map(); // card name -> user's choice; unset = open only when not ok
+const isOpen = (p) => (openState.has(p.name) ? openState.get(p.name) : p.level !== 'ok');
+const claudeRank = (p) => ({ working: 0, recent: 1, idle: 2 }[p.box && p.box.claude && p.box.claude.state] ?? 3);
+const SORTS = {
+  status: (a, b) => RANK[b.level] - RANK[a.level] || a.name.localeCompare(b.name),
+  name: (a, b) => a.name.localeCompare(b.name),
+  claude: (a, b) => claudeRank(a) - claudeRank(b) || a.name.localeCompare(b.name),
+  tokens: (a, b) => tokensOut(b) - tokensOut(a) || a.name.localeCompare(b.name),
+  ram: (a, b) => ramPct(b) - ramPct(a) || a.name.localeCompare(b.name),
+};
+const tokensOut = (p) => (p.box && p.box.claude && p.box.claude.today && p.box.claude.today.out) || 0;
+const ramPct = (p) => (p.box && p.box.stats && p.box.stats.mem_pct) || 0;
+
+// One-line summary shown in the closed card.
+function miniLine(p) {
+  const m = el('div', 'mini');
+  const b = p.box;
+  if (b && b.running === false) m.append(el('span', 'warned', 'gestoppt'));
+  if (b && b.claude && b.claude.state) {
+    const c = el('span', 'cl ' + b.claude.state);
+    c.append(el('span', 'cdot'), el('span', null, CLAUDE_STATE[b.claude.state]));
+    m.append(c);
+  }
+  if (tokensOut(p)) m.append(el('span', 'num', compact(tokensOut(p)) + ' Output'));
+  if (b && b.stats) m.append(el('span', 'num', 'RAM ' + Math.round(b.stats.mem_pct) + ' %'));
+  if (p.repo && p.repo.prs.length) m.append(el('span', 'num', p.repo.prs.length + ' PR' + (p.repo.prs.length > 1 ? 's' : '')));
+  if (b && (b.oom_killed || b.restarts > 0)) m.append(el('span', 'warned', 'Neustart'));
+  return m;
+}
+function collapsible(card, p) {
+  const d = el('details', 'card');
+  d.dataset.level = p.level;
+  d.open = isOpen(p);
+  d.addEventListener('toggle', () => openState.set(p.name, d.open));
+  const sum = el('summary');
+  sum.append(card.firstChild, miniLine(p));
+  const body = el('div', 'card-body');
+  body.append(...[...card.childNodes]);
+  d.append(sum, body);
+  return d;
+}
+
 function merge(d) {
   const names = new Map();
   for (const b of d.boxes) names.set(b.repo, { name: b.project, box: b });
@@ -246,7 +294,7 @@ function merge(d) {
   }
   const list = [...names.values()];
   for (const p of list) p.level = worst(p.box && p.box.level, p.repo && p.repo.level);
-  list.sort((a, b) => RANK[b.level] - RANK[a.level] || a.name.localeCompare(b.name));
+  list.sort(SORTS[sortKey] || SORTS.status);
   return list;
 }
 
@@ -331,6 +379,15 @@ async function load() {
     fetchFailed = true;
   }
   render();
+}
+
+$('sort').value = SORTS[sortKey] ? sortKey : 'status';
+$('sort').addEventListener('change', () => { sortKey = $('sort').value; store('sort', sortKey); render(); });
+for (const [id, open] of [['expand', true], ['collapse', false]]) {
+  $(id).addEventListener('click', () => {
+    for (const p of merge(data)) openState.set(p.name, open);
+    render();
+  });
 }
 
 load();

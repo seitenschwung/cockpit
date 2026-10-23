@@ -169,3 +169,23 @@ main { padding-bottom: 56px; }
 .egress ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; overflow-wrap: anywhere; }
 .stats li.tokens small { display: block; font-size: 11px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .cl.working .cdot { animation: none; } }
+
+/* compact collapsible cards */
+.section-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+.tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; color: var(--muted); }
+.tools select, .tools button { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px; }
+.tools button { cursor: pointer; }
+.tools select:focus-visible, .tools button:focus-visible, .card > summary:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; }
+.cards { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; align-items: start; }
+.card { padding: 0; gap: 0; }
+.card > summary { list-style: none; cursor: pointer; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 6px; }
+.card > summary::-webkit-details-marker { display: none; }
+.card .card-head h3 { font-size: 16px; }
+.card .card-head::after { content: "▾"; color: var(--muted); font-size: 12px; margin-left: 4px; transition: transform .15s; }
+.card:not([open]) .card-head::after { transform: rotate(-90deg); }
+.card .card-head { justify-content: flex-start; }
+.card .card-head .lvl { margin-left: auto; }
+.card-body { display: flex; flex-direction: column; gap: 14px; padding: 0 16px 14px; }
+.mini { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.mini .cl { gap: 6px; }
+@media (prefers-reduced-motion: reduce) { .card .card-head::after { transition: none; } }

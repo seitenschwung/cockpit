@@ -18,6 +18,8 @@ services:
         max-file: "3"
     expose:
       - "8080"
+    ports:
+      - "127.0.0.1:8090:8080"
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777,noexec,nosuid,nodev

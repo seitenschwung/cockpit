@@ -119,6 +119,7 @@ function todoItems(all, stale) {
 function renderTodo(all, stale) {
   const list = $('todo');
   const items = todoItems(all, stale);
+  attention = items.filter((i) => i.sev !== 'info').length;
   if (!items.length) { list.replaceChildren(el('li', 'todo-none', 'Nichts zu tun. Alles läuft.')); return; }
   list.replaceChildren(...items.map((i) => {
     const li = el('li', 'todo-item ' + i.sev);
@@ -455,6 +456,8 @@ document.addEventListener('click', (e) => {
   const d = t.dataset;
   if (d.pg) { ui.pg = d.pg; update(); window.scrollTo(0, 0); }
   else if (d.p) { ui.pg = 'project'; ui.p = d.p; update(); window.scrollTo(0, 0); }
+  else if (d.theme) { prefs.theme = d.theme; store('theme', d.theme); applyPrefs(); }
+  else if (d.density) { prefs.density = d.density; store('density', d.density); applyPrefs(); }
   else if (d.f) { ui.f = d.f; update(); }
   else if (d.view) { ui.v = d.view; update(); }
   else if (d.metric) { ui.m = d.metric; update(); }

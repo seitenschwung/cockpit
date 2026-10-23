@@ -273,6 +273,16 @@ const ui = {
   res: pick(hp.get('res'), ['ram', 'cpu'], 'ram'),
   rev: hp.get('rev') === '1',
 };
+// Theme and density are per-device preferences, not part of the shareable URL.
+const prefs = { theme: pick(store('theme'), ['auto', 'light', 'dark'], 'auto'), density: pick(store('density'), ['normal', 'compact'], 'normal') };
+function applyPrefs() {
+  const root = document.documentElement;
+  if (prefs.theme === 'auto') root.removeAttribute('data-theme'); else root.dataset.theme = prefs.theme;
+  if (prefs.density === 'compact') root.dataset.density = 'compact'; else root.removeAttribute('data-density');
+  for (const b of document.querySelectorAll('#theme button')) b.setAttribute('aria-pressed', String(b.dataset.theme === prefs.theme));
+  for (const b of document.querySelectorAll('#density button')) b.setAttribute('aria-pressed', String(b.dataset.density === prefs.density));
+}
+applyPrefs();
 let sortKey = hp.get('s') || store('sort') || 'status';
 function syncUrl() {
   const p = new URLSearchParams();
@@ -348,13 +358,22 @@ function merge(d) {
   return list;
 }
 
+// Tab title shows how many things need attention; the favicon carries the overall state.
+let attention = 0;
+const ICON_COLOR = { ok: '#2fd18b', warn: '#f2a93b', bad: '#ff5d63' };
+function setTitle(level) {
+  document.title = (attention ? '(' + attention + ') ' : '') + (ui.pg === 'project' && ui.p ? ui.p : PAGES[ui.pg]) + ' · Cockpit';
+  if (!level) return;
+  $('icon').href = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0d1626"/><circle cx="16" cy="16" r="8" fill="' + ICON_COLOR[level] + '"/></svg>');
+}
+
 function showPage() {
   for (const s of document.querySelectorAll('.page')) s.hidden = s.dataset.page !== ui.pg;
   const navPg = ui.pg === 'project' ? 'projects' : ui.pg; // a project page belongs under Projekte
   for (const b of $('nav').querySelectorAll('button')) {
     if (b.dataset.pg === navPg) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
-  document.title = (ui.pg === 'project' && ui.p ? ui.p : PAGES[ui.pg]) + ' · Cockpit';
+  setTitle();
 }
 
 function render() {
@@ -425,6 +444,7 @@ function render() {
   renderPrs(all);
   renderDetail(all);
   renderTodo(all, stale);
+  setTitle(level);
   renderControls(all, shown);
   renderInsights(all);
 

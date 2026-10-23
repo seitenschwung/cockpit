@@ -83,4 +83,13 @@ test('sidebar, view switch and filters respond to clicks', async ({ page }) => {
   await expect(page.locator('#metric [data-metric=cache]')).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('theme and density choices survive a reload', async ({ page }) => {
+  await open(page);
+  await page.locator('#theme [data-theme=light]').click();
+  await page.locator('#density [data-density=compact]').click();
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-density', 'compact');
+});
+
 function d0name(d) { return d.boxes[0].project; }

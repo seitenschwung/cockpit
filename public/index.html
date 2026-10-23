@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <title>Cockpit</title>
   <meta name="description" content="Zustand aller Projekt-Boxen, Repos und Seiten auf dem Home-Server.">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" id="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,6 +20,17 @@
       <button type="button" data-pg="stats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Statistik</button>
       <button type="button" data-pg="system"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg>System</button>
     </nav>
+    <div class="prefs">
+      <div class="seg" id="theme" role="group" aria-label="Farbschema">
+        <button type="button" data-theme="auto">Auto</button>
+        <button type="button" data-theme="light">Hell</button>
+        <button type="button" data-theme="dark">Dunkel</button>
+      </div>
+      <div class="seg" id="density" role="group" aria-label="Dichte">
+        <button type="button" data-density="normal">Normal</button>
+        <button type="button" data-density="compact">Kompakt</button>
+      </div>
+    </div>
     <p class="age"><span class="live" aria-hidden="true"></span><span id="age"></span></p>
   </aside>
 

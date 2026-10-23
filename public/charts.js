@@ -31,6 +31,7 @@ function matches(p) {
 // Scroll to a project's card and open it. Filters that hide it are reset first.
 function reveal(name) {
   ui.v = 'cards';
+  ui.pg = 'projects';
   const hidden = !merge(data).find((p) => p.name === name && matches(p));
   if (hidden) { ui.f = 'all'; ui.q = ''; }
   openState.set(name, true);
@@ -314,7 +315,8 @@ document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (!t) return;
   const d = t.dataset;
-  if (d.f) { ui.f = d.f; update(); }
+  if (d.pg) { ui.pg = d.pg; update(); window.scrollTo(0, 0); }
+  else if (d.f) { ui.f = d.f; update(); }
   else if (d.view) { ui.v = d.view; update(); }
   else if (d.metric) { ui.m = d.metric; update(); }
   else if (d.range) { ui.r = d.range; update(); }
@@ -331,7 +333,7 @@ document.addEventListener('click', (e) => {
 $('q').addEventListener('input', () => { ui.q = $('q').value; update(); });
 document.addEventListener('keydown', (e) => {
   const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
-  if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $('q').focus(); }
+  if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); ui.pg = 'projects'; update(); $('q').focus(); }
   else if (e.key === 'Escape' && document.activeElement === $('q')) { ui.q = ''; $('q').value = ''; update(); $('q').blur(); }
 });
 let lastW = 0, resizeT = 0;

@@ -450,6 +450,9 @@ function renderInsights(all) {
 
 // ---- events (delegated, the DOM is rebuilt on every render) ----
 function update() { syncUrl(); render(); }
+// Back/Forward and hand-edited hashes: re-read the state from the URL.
+window.addEventListener('popstate', () => { readHash(); render(); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', () => { readHash(); render(); });
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (!t) return;

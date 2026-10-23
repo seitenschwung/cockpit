@@ -283,3 +283,6 @@ main { padding-bottom: 56px; }
 .tablewrap th button, .tablewrap .name button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-transform: inherit; letter-spacing: inherit; }
 .tablewrap .name { font-weight: 600; } .tablewrap .name button:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .card.flash { transition: none; } }
+
+.navn { margin-left: auto; font-size: 12px; font-weight: 650; min-width: 18px; text-align: center; padding: 0 6px; border-radius: 99px; background: var(--warn-bg); color: var(--warn); }
+.navn:empty { display: none; }

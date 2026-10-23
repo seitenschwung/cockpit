@@ -248,7 +248,7 @@ function store(k, v) {
 // UI state lives in the URL hash (#f=problems&q=x&v=table&s=ram&r=3&m=out), so views can be shared and bookmarked.
 const hp = new URLSearchParams(location.hash.slice(1));
 const pick = (v, ok, d) => (ok.includes(v) ? v : d);
-const PAGES = { overview: 'Übersicht', projects: 'Projekte', stats: 'Statistik', system: 'System' };
+const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', stats: 'Statistik', system: 'System' };
 const ui = {
   pg: pick(hp.get('pg'), Object.keys(PAGES), 'overview'),
   f: pick(hp.get('f'), ['all', 'problems', 'working', 'prs', 'stopped'], 'all'),
@@ -355,6 +355,9 @@ function render() {
     $('sub').textContent = '';
     $('donut').replaceChildren();
     $('cards').replaceChildren();
+    $('prs').replaceChildren();
+    $('prsub').textContent = '';
+    $('prcount').textContent = '';
     renderInsights(null);
     $('host').replaceChildren();
     notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
@@ -401,6 +404,7 @@ function render() {
   $('table').hidden = ui.v !== 'table';
   $('cards').replaceChildren(...(ui.v === 'cards' ? shown.map(renderCard) : []));
   renderTable(shown);
+  renderPrs(all);
   renderControls(all, shown);
   renderInsights(all);
 

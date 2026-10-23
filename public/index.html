@@ -16,6 +16,7 @@
     <nav id="nav" aria-label="Bereiche">
       <button type="button" data-pg="overview"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-4H4zM14 4v3h6V4z"/></svg>Übersicht</button>
       <button type="button" data-pg="projects"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projekte</button>
+      <button type="button" data-pg="prs"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V10a3 3 0 0 0-3-3h-3"/><path d="m14 4-3 3 3 3"/></svg>Pull Requests <span class="navn" id="prcount"></span></button>
       <button type="button" data-pg="stats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Statistik</button>
       <button type="button" data-pg="system"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg>System</button>
     </nav>
@@ -103,6 +104,12 @@
       <p class="count" id="count" aria-live="polite"></p>
       <div class="cards" id="cards"></div>
       <div class="tablewrap" id="table" hidden></div>
+    </section>
+
+    <section class="page" data-page="prs" aria-labelledby="h-prs">
+      <h1 class="pagetitle" id="h-prs">Pull Requests</h1>
+      <p class="count" id="prsub"></p>
+      <div class="tablewrap" id="prs"></div>
     </section>
 
     <section class="page" data-page="system" aria-labelledby="h-host">

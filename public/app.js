@@ -136,7 +136,7 @@ function renderCard(p) {
   card.dataset.level = p.level;
 
   const head = el('div', 'card-head');
-  head.append(el('h3', null, p.name), el('span', 'lvl ' + p.level, LABEL[p.level]));
+  head.append(el('h2', null, p.name), el('span', 'lvl ' + p.level, LABEL[p.level]));
   card.append(head);
 
   if (repo && repo.activity !== 'idle') {
@@ -248,7 +248,9 @@ function store(k, v) {
 // UI state lives in the URL hash (#f=problems&q=x&v=table&s=ram&r=3&m=out), so views can be shared and bookmarked.
 const hp = new URLSearchParams(location.hash.slice(1));
 const pick = (v, ok, d) => (ok.includes(v) ? v : d);
+const PAGES = { overview: 'Übersicht', projects: 'Projekte', prs: 'Pull Requests', stats: 'Statistik', system: 'System' };
 const ui = {
+  pg: pick(hp.get('pg'), Object.keys(PAGES), 'overview'),
   f: pick(hp.get('f'), ['all', 'problems', 'working', 'prs', 'stopped'], 'all'),
   q: (hp.get('q') || '').slice(0, 80),
   v: pick(hp.get('v'), ['cards', 'table'], 'cards'),
@@ -260,6 +262,7 @@ const ui = {
 let sortKey = hp.get('s') || store('sort') || 'status';
 function syncUrl() {
   const p = new URLSearchParams();
+  if (ui.pg !== 'overview') p.set('pg', ui.pg);
   if (ui.f !== 'all') p.set('f', ui.f);
   if (ui.q) p.set('q', ui.q);
   if (ui.v !== 'cards') p.set('v', ui.v);
@@ -330,8 +333,17 @@ function merge(d) {
   return list;
 }
 
+function showPage() {
+  for (const s of document.querySelectorAll('.page')) s.hidden = s.dataset.page !== ui.pg;
+  for (const b of $('nav').querySelectorAll('button')) {
+    if (b.dataset.pg === ui.pg) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  }
+  document.title = PAGES[ui.pg] + ' · Cockpit';
+}
+
 function render() {
   const top = $('top'), notice = $('notice');
+  showPage();
   const msgs = [];
   let noticeLevel = 'bad';
 
@@ -343,6 +355,9 @@ function render() {
     $('sub').textContent = '';
     $('donut').replaceChildren();
     $('cards').replaceChildren();
+    $('prs').replaceChildren();
+    $('prsub').textContent = '';
+    $('prcount').textContent = '';
     renderInsights(null);
     $('host').replaceChildren();
     notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
@@ -389,6 +404,7 @@ function render() {
   $('table').hidden = ui.v !== 'table';
   $('cards').replaceChildren(...(ui.v === 'cards' ? shown.map(renderCard) : []));
   renderTable(shown);
+  renderPrs(all);
   renderControls(all, shown);
   renderInsights(all);
 

@@ -14,11 +14,12 @@ Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is Ger
 - No npm, no tests; CI builds the Dockerfile and crawls `/` (axe, Lighthouse).
 
 ## Layout
-- `public/index.html`, `style.css`, `app.js` (state, cards, `ui` object synced to URL hash), `charts.js` (token/resource/egress charts, filters, table view): the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` on localhost/CI, else the home server's URL (CORS, no credentials).
+- `public/index.html`, `style.css`, `app.js` (state, cards, `ui` object synced to URL hash, pages via `ui.pg`), `charts.js` (token/resource/egress charts, filters, table view): the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` on localhost/CI, else the home server's URL (CORS, no credentials).
 - `public/status.json`: fake sample data (copy of `~/inbox/status.sample.json`). Never commit real data.
 - `Dockerfile`, `nginx.conf`: the image Coolify runs on the VPS (also what CI tests).
 
 ## Conventions
+- Layout: sidebar nav (`#nav`, `data-pg`) switches `.page[data-page]` sections: overview, projects, prs, stats, system. Route is `pg=` in the URL hash.
 - Self-check: only the card whose `site.url` origin == `location.origin` is probed in the browser (`./healthz`, `./version.txt`, `selfCheck()` in app.js). Never probe other sites. `site.checked === false` is shown as "nicht vom Home-Server prüfbar", not as down.
 - Read-only: no buttons that trigger anything, only links (new tab).
 - Render with `textContent`/DOM, never innerHTML. Dark and light via `prefers-color-scheme`.

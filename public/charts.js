@@ -31,6 +31,7 @@ function matches(p) {
 // Scroll to a project's card and open it. Filters that hide it are reset first.
 function reveal(name) {
   ui.v = 'cards';
+  ui.pg = 'projects';
   const hidden = !merge(data).find((p) => p.name === name && matches(p));
   if (hidden) { ui.f = 'all'; ui.q = ''; }
   openState.set(name, true);
@@ -76,6 +77,49 @@ function renderControls(all, shown) {
     $('count').append(' ');
     (ui.v === 'cards' ? $('cards') : $('table')).replaceChildren(e);
   }
+}
+
+// ---- pull requests (all repos, review-needed first) ----
+const PR_CI = { green: 'CI grün', red: 'CI rot', running: 'CI läuft', none: 'kein CI' };
+const prRank = (x) => (x.labels.includes('manual-review') ? 0 : 3) + ({ red: 0, running: 1, none: 2, green: 2 }[x.ci] ?? 2);
+function renderPrs(all) {
+  const list = [];
+  for (const p of all) if (p.repo) for (const pr of p.repo.prs) list.push({ ...pr, project: p.name });
+  list.sort((a, b) => prRank(a) - prRank(b) || Date.parse(a.created_at) - Date.parse(b.created_at));
+  const review = list.filter((x) => x.labels.includes('manual-review')).length;
+  $('prcount').textContent = review ? String(review) : '';
+  $('prsub').textContent = list.length
+    ? list.length + (list.length === 1 ? ' offener PR' : ' offene PRs') + (review ? ', davon ' + review + ' zur Prüfung durch dich' : '')
+    : '';
+  const wrap = $('prs');
+  if (!list.length) { wrap.replaceChildren(el('p', 'empty', 'Keine offenen Pull Requests.')); return; }
+  const t = el('table');
+  const head = el('tr');
+  for (const [label, cls] of [['Projekt'], ['Pull Request'], ['Autor'], ['Alter', 'num'], ['Labels'], ['CI']]) {
+    const th = el('th', cls || '', label);
+    th.scope = 'col';
+    head.append(th);
+  }
+  const thead = el('thead');
+  thead.append(head);
+  const tbody = el('tbody');
+  for (const pr of list) {
+    const tr = el('tr');
+    const name = el('th', 'name', pr.project);
+    name.scope = 'row';
+    const title = el('td');
+    title.append(link(pr.url, '#' + pr.number + ' ' + pr.title));
+    if (pr.draft) title.append(' ', el('span', 'chip', 'Entwurf'));
+    const labels = el('td');
+    for (const l of pr.labels) labels.append(el('span', 'chip' + (l === 'manual-review' ? ' review' : ''), l), ' ');
+    if (!pr.labels.length) labels.textContent = '–';
+    const ci = el('td');
+    ci.append(el('span', 'chip ' + pr.ci, PR_CI[pr.ci] || pr.ci));
+    tr.append(name, title, el('td', null, pr.author), el('td', 'num', ago(Math.max(0, Math.round((now() - Date.parse(pr.created_at)) / 1000)))), labels, ci);
+    tbody.append(tr);
+  }
+  t.append(thead, tbody);
+  wrap.replaceChildren(t);
 }
 
 // ---- table view ----
@@ -314,7 +358,8 @@ document.addEventListener('click', (e) => {
   const t = e.target.closest('button');
   if (!t) return;
   const d = t.dataset;
-  if (d.f) { ui.f = d.f; update(); }
+  if (d.pg) { ui.pg = d.pg; update(); window.scrollTo(0, 0); }
+  else if (d.f) { ui.f = d.f; update(); }
   else if (d.view) { ui.v = d.view; update(); }
   else if (d.metric) { ui.m = d.metric; update(); }
   else if (d.range) { ui.r = d.range; update(); }
@@ -331,7 +376,7 @@ document.addEventListener('click', (e) => {
 $('q').addEventListener('input', () => { ui.q = $('q').value; update(); });
 document.addEventListener('keydown', (e) => {
   const typing = /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
-  if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); $('q').focus(); }
+  if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) { e.preventDefault(); ui.pg = 'projects'; update(); $('q').focus(); }
   else if (e.key === 'Escape' && document.activeElement === $('q')) { ui.q = ''; $('q').value = ''; update(); $('q').blur(); }
 });
 let lastW = 0, resizeT = 0;

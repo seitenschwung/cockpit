@@ -10,7 +10,10 @@ const LABEL = { ok: 'OK', warn: 'Warnung', bad: 'Fehler' };
 const $ = (id) => document.getElementById(id);
 // ?now=<ISO> pins the clock, so the sample data can be shown without "collector stuck".
 const nowParam = new URLSearchParams(location.search).get('now');
-const now = () => (nowParam ? new Date(nowParam).getTime() : Date.now());
+// A pinned clock keeps running from the pinned time, so the ticking can be seen too.
+const pinned = nowParam ? new Date(nowParam).getTime() : null;
+const loadedAt = Date.now();
+const now = () => (pinned != null ? pinned + (Date.now() - loadedAt) : Date.now());
 
 let data = null;
 let fetchFailed = false;
@@ -36,6 +39,16 @@ function ago(s) {
   if (s < 3600) return Math.floor(s / 60) + ' min';
   if (s < 86400) return Math.floor(s / 3600) + ' h';
   return Math.floor(s / 86400) + ' d';
+}
+function ageText(ts) {
+  return ago(Math.max(0, Math.round((now() - ts) / 1000)));
+}
+// Time label that the 1 s ticker keeps up to date (data-ts = epoch ms, data-pre = text before).
+function ageEl(cls, ts, pre) {
+  const e = el('span', cls, pre + ageText(ts));
+  e.dataset.ts = ts;
+  e.dataset.pre = pre;
+  return e;
 }
 function row(key, ...content) {
   const r = el('div', 'row');
@@ -83,7 +96,7 @@ function renderCard(p) {
     rows.append(row('Main',
       ci ? el('span', ciOk ? 'good' : 'badc', ciOk ? 'CI grün' : 'CI ' + ci.conclusion) : el('span', 'muted', 'kein CI'),
       sep(), el('span', null, (ci && !ciOk ? ci.title : m.title) || ''),
-      el('span', 'muted num', ' · ' + ago(Math.max(0, Math.round((now() - Date.parse((ci || m).created_at || m.date)) / 1000))))));
+      ageEl('muted num', Date.parse((ci || m).created_at || m.date), ' · ')));
   }
   if (box) {
     const bv = [];
@@ -204,6 +217,8 @@ function render() {
     stat(s.open_prs, 'offene PRs', ''), stat(s.deploying, 'laufende Deploys', s.deploying ? 'info' : ''));
   $('sub').textContent = s.ok + ' von ' + (s.ok + s.warn + s.bad) + ' Prüfungen in Ordnung';
   $('donut').replaceChildren(donut(s));
+  $('age').dataset.ts = Date.parse(data.generated_at);
+  $('age').dataset.pre = 'Stand vor ';
   $('age').textContent = 'Stand vor ' + ago(age);
 
   notice.textContent = msgs.join(' ');
@@ -242,3 +257,6 @@ async function load() {
 
 load();
 setInterval(load, REFRESH_MS);
+setInterval(() => {
+  for (const e of document.querySelectorAll('[data-ts]')) e.textContent = e.dataset.pre + ageText(+e.dataset.ts);
+}, 1000);

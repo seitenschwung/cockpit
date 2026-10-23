@@ -16,7 +16,7 @@ Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is Ger
 ## Layout
 - `public/index.html`, `style.css`, `app.js`: the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` on localhost/CI, else the home server's URL (CORS, no credentials).
 - `public/status.json`: fake sample data (copy of `~/inbox/status.sample.json`). Never commit real data.
-- `Dockerfile`, `nginx.conf`: template for CI only; production serves `public/` directly.
+- `Dockerfile`, `nginx.conf`: the image Coolify runs on the VPS (also what CI tests).
 
 ## Conventions
 - Read-only: no buttons that trigger anything, only links (new tab).

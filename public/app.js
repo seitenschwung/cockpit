@@ -1,9 +1,6 @@
 'use strict';
-// Only production (the tailnet UI on the VPS) reads the home server. Everything else (localhost, CI, dev preview
-// `*.box.seitenschwung.com`, PR previews `*-prN.seitenschwung.com`) reads the sample data next to the page.
-const DATA_URL = location.hostname === 'ubuntu-vps.tailedf987.ts.net'
-  ? 'https://homeserver.tailedf987.ts.net:8445/status.json'
-  : './status.json';
+// Same origin: on the home server public/ and the real status.json are served together.
+const DATA_URL = './status.json';
 const REFRESH_MS = 15000;
 const STALE_S = 180;
 const RANK = { ok: 0, warn: 1, bad: 2 };
@@ -18,7 +15,7 @@ const now = () => (pinned != null ? pinned + (Date.now() - loadedAt) : Date.now(
 
 let data = null;
 let fetchFailed = false;
-let fetchError = "";
+let fetchError = '';
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -530,7 +527,7 @@ async function load() {
     fetchFailed = false;
   } catch (e) {
     fetchFailed = true;
-    fetchError = e && e.message || String(e);
+    fetchError = (e && e.message) || String(e);
   }
   render();
 }

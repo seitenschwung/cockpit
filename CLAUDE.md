@@ -14,7 +14,7 @@ Plain HTML/CSS/JS in `public/`, no build, no external fonts/CDNs. UI text is Ger
 - Tests: `npm ci && CHROMIUM_PATH=/usr/bin/chromium npm test` (Playwright, `tests/states.spec.mjs`, mocks status.json). CI also builds the Dockerfile and crawls `/` (axe, Lighthouse).
 
 ## Layout
-- `public/index.html`, `style.css`, `app.js` (state, cards, `ui` object synced to URL hash, pages via `ui.pg`), `charts.js` (token/resource/egress charts, filters, table view): the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` everywhere except production (cockpit.seitenschwung.com), which uses the home server URL (CORS, no credentials).
+- `public/index.html`, `style.css`, `app.js` (state, cards, `ui` object synced to URL hash, pages via `ui.pg`), `charts.js` (token/resource/egress charts, filters, table view): the UI; fetches `DATA_URL` (top of app.js) every 15 s: `./status.json` everywhere except production (`ubuntu-vps.tailedf987.ts.net`), which uses the home server URL (CORS, no credentials).
 - `public/activity.js`: Aktivität page (host/box curves as inline SVG, disks, deploys, sites, costs). Loaded before app.js on purpose (app.js renders at once; a late script races).
 - `public/detail.js`: project detail page (`pg=project&p=<name>`), reuses `projectRows`, `boxStats`, `prList` from app.js.
 - `public/status.json`: fake sample data (copy of `~/inbox/status.sample.json`). Never commit real data.

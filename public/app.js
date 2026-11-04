@@ -1,7 +1,7 @@
 'use strict';
-// Only production reads the home server. Everything else (localhost, CI, dev preview
+// Only production (the tailnet UI on the VPS) reads the home server. Everything else (localhost, CI, dev preview
 // `*.box.seitenschwung.com`, PR previews `*-prN.seitenschwung.com`) reads the sample data next to the page.
-const DATA_URL = location.hostname === 'cockpit.seitenschwung.com'
+const DATA_URL = location.hostname === 'ubuntu-vps.tailedf987.ts.net'
   ? 'https://homeserver.tailedf987.ts.net/status.json'
   : './status.json';
 const REFRESH_MS = 15000;
@@ -18,6 +18,7 @@ const now = () => (pinned != null ? pinned + (Date.now() - loadedAt) : Date.now(
 
 let data = null;
 let fetchFailed = false;
+let fetchError = "";
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -408,7 +409,7 @@ function render() {
     renderActivity(null);
     $('host').replaceChildren();
     $('collector').replaceChildren();
-    notice.textContent = 'status.json ist nicht ladbar. Neuer Versuch alle 15 s.';
+    notice.textContent = `status.json ist nicht ladbar (${DATA_URL}: ${fetchError}). Neuer Versuch alle 15 s.`;
     notice.className = 'notice';
     notice.hidden = false;
     return;
@@ -529,6 +530,7 @@ async function load() {
     fetchFailed = false;
   } catch (e) {
     fetchFailed = true;
+    fetchError = e && e.message || String(e);
   }
   render();
 }

@@ -2,7 +2,7 @@
 // Only production (the tailnet UI on the VPS) reads the home server. Everything else (localhost, CI, dev preview
 // `*.box.seitenschwung.com`, PR previews `*-prN.seitenschwung.com`) reads the sample data next to the page.
 const DATA_URL = location.hostname === 'ubuntu-vps.tailedf987.ts.net'
-  ? 'https://homeserver.tailedf987.ts.net/status.json'
+  ? 'https://homeserver.tailedf987.ts.net:8445/status.json'
   : './status.json';
 const REFRESH_MS = 15000;
 const STALE_S = 180;

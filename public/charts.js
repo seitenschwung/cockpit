@@ -137,9 +137,17 @@ function renderTodo(all, stale) {
   }));
 }
 
-// ---- pull requests (all repos, review-needed first) ----
-const PR_CI = { green: 'CI grün', red: 'CI rot', running: 'CI läuft', none: 'kein CI' };
-const prRank = (x) => (x.labels.includes('manual-review') ? 0 : 3) + ({ red: 0, running: 1, none: 2, green: 2 }[x.ci] ?? 2);
+// ---- pull requests (all repos): merge verdict first, then the rest on one line ----
+// Verdict = what the owner wants to know at a glance: can I merge this? (CI only: the collector sends no conflict info.)
+const PR_VERDICT = {
+  green: ['Mergebar', 'green'],
+  running: ['CI läuft', 'running'],
+  red: ['CI rot, nicht mergen', 'red'],
+  none: ['Kein CI', ''],
+};
+const prVerdict = (pr) => (pr.draft ? ['Entwurf', ''] : PR_VERDICT[pr.ci] || [pr.ci, '']);
+// review PRs first, and among them the ones that are ready first; draft last within its group
+const prRank = (x) => (x.labels.includes('manual-review') ? 0 : 4) + ({ green: 0, running: 1, red: 2, none: 3 }[x.ci] ?? 3);
 function renderPrs(all) {
   const list = [];
   for (const p of all) if (p.repo) for (const pr of p.repo.prs) list.push({ ...pr, project: p.name });
@@ -149,12 +157,18 @@ function renderPrs(all) {
   $('prsub').textContent = list.length
     ? list.length + (list.length === 1 ? ' offener PR' : ' offene PRs') + (review ? ', davon ' + review + ' zur Prüfung durch dich' : '')
     : '';
+  const sum = $('prsum');
+  sum.replaceChildren();
+  for (const k of ['green', 'running', 'red', 'none']) {
+    const n = list.filter((x) => !x.draft && x.ci === k).length;
+    if (n) sum.append(el('span', 'chip ' + PR_VERDICT[k][1], n + ' ' + PR_VERDICT[k][0]));
+  }
   const wrap = $('prs');
   if (!list.length) { wrap.replaceChildren(el('p', 'empty', 'Keine offenen Pull Requests.')); return; }
-  const t = el('table');
+  const t = el('table', 'prtable');
   const head = el('tr');
-  for (const [label, cls] of [['Projekt'], ['Pull Request'], ['Autor'], ['Alter', 'num'], ['Labels'], ['CI']]) {
-    const th = el('th', cls || '', label);
+  for (const label of ['Merge?', 'Pull Request']) {
+    const th = el('th', '', label);
     th.scope = 'col';
     head.append(th);
   }
@@ -163,17 +177,19 @@ function renderPrs(all) {
   const tbody = el('tbody');
   for (const pr of list) {
     const tr = el('tr');
-    const name = el('th', 'name', pr.project);
-    name.scope = 'row';
-    const title = el('td');
-    title.append(link(pr.url, '#' + pr.number + ' ' + pr.title));
-    if (pr.draft) title.append(' ', el('span', 'chip', 'Entwurf'));
-    const labels = el('td');
-    for (const l of pr.labels) labels.append(el('span', 'chip' + (l === 'manual-review' ? ' review' : ''), l), ' ');
-    if (!pr.labels.length) labels.textContent = '–';
-    const ci = el('td');
-    ci.append(el('span', 'chip ' + pr.ci, PR_CI[pr.ci] || pr.ci));
-    tr.append(name, title, el('td', null, pr.author), el('td', 'num', ago(Math.max(0, Math.round((now() - Date.parse(pr.created_at)) / 1000)))), labels, ci);
+    const [vText, vCls] = prVerdict(pr);
+    const verdict = el('th', 'verdict');
+    verdict.scope = 'row';
+    verdict.append(el('span', 'chip ' + vCls, vText));
+    const main = el('td');
+    const top = el('div', 'prtop');
+    top.append(link(pr.url, '#' + pr.number + ' ' + pr.title));
+    if (pr.labels.includes('manual-review')) top.append(' ', el('span', 'chip review', 'manual-review'));
+    main.append(top);
+    const age = ago(Math.max(0, Math.round((now() - Date.parse(pr.created_at)) / 1000)));
+    const others = pr.labels.filter((l) => l !== 'manual-review');
+    main.append(el('div', 'prmeta', [pr.project, pr.author, age, ...others].join(' · ')));
+    tr.append(verdict, main);
     tbody.append(tr);
   }
   t.append(thead, tbody);

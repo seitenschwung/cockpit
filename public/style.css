@@ -389,3 +389,9 @@ button.plain:hover { text-decoration: underline; }
 #activity .empty { color: var(--muted); font-size: 13px; }
 .flag.ok { color: var(--ok); } .flag.warn { color: var(--warn); }
 .costcols > * { min-width: 0; } .costcols .mini-table th, .costcols .mini-table td { white-space: normal; } @media (max-width: 760px) { .costcols .mini-table th[scope=row] { width: 55%; } }
+
+.chip.green, .chip.red, .chip.running { cursor: default; }
+.prtable th.verdict { width: 1%; white-space: nowrap; vertical-align: top; }
+.prtable .prtop { overflow-wrap: anywhere; }
+.prtable .prmeta { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.prtable thead th { position: sticky; top: 0; background: var(--surface); }

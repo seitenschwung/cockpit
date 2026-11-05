@@ -305,8 +305,8 @@ function syncUrl() {
   const nav = (prev.get('pg') || 'overview') !== ui.pg || (ui.pg === 'project' && prev.get('p') !== ui.p);
   try { history[nav ? 'pushState' : 'replaceState'](null, '', location.pathname + location.search + (p.toString() ? '#' + p : '')); } catch (e) { /* ignore */ }
 }
-const openState = new Map(); // card name -> user's choice; unset = open only when not ok
-const isOpen = (p) => (openState.has(p.name) ? openState.get(p.name) : p.level !== 'ok');
+const openState = new Map(); // card name -> user's choice; unset = closed, so every card looks the same
+const isOpen = (p) => openState.get(p.name) === true;
 const claudeRank = (p) => ({ working: 0, recent: 1, idle: 2 }[p.box && p.box.claude && p.box.claude.state] ?? 3);
 const SORTS = {
   status: (a, b) => RANK[b.level] - RANK[a.level] || a.name.localeCompare(b.name),
@@ -320,20 +320,52 @@ const tokensOut = (p) => (p.box && p.box.claude && p.box.claude.today && p.box.c
 const cpuPct = (p) => (p.box && p.box.stats && p.box.stats.cpu_pct) || 0;
 const ramPct = (p) => (p.box && p.box.stats && p.box.stats.mem_pct) || 0;
 
-// One-line summary shown in the closed card.
+// Live-site indicator, the same on every card: is there a live site, and does the home server reach it?
+function siteChip(p) {
+  const s = p.repo && p.repo.site;
+  let cls, txt;
+  if (!s) { cls = 'none'; txt = 'keine Live-Seite'; }
+  else if (s.checked === false) { cls = 'unk'; txt = 'Live-Seite · nicht prüfbar'; }
+  else if (!s.up) { cls = 'bad'; txt = 'Live-Seite · nicht erreichbar'; }
+  else if (s.current === false) { cls = 'warn'; txt = 'Live-Seite · alter Stand'; }
+  else { cls = 'ok'; txt = 'Live-Seite · ' + s.ms + ' ms'; }
+  const c = el('span', 'sitechip ' + cls, txt);
+  if (s) c.title = s.url;
+  return c;
+}
+// What is wrong, in one line, so a closed card still shows why it is not green.
+function problemText(p) {
+  if (p.level === 'ok') return '';
+  const { box, repo } = p;
+  if (box && box.running === false) return 'Box gestoppt';
+  if (box && box.notes.length) return box.notes[0];
+  const s = repo && repo.site;
+  if (s && s.checked !== false && !s.up) return ''; // the site chip already says so
+  const ci = repo && repo.main && repo.main.ci;
+  if (ci && ci.conclusion !== 'success') return 'Main: CI ' + ci.conclusion;
+  if (repo && repo.prs.some((x) => x.ci === 'red')) return 'PR mit roter CI';
+  return LABEL[p.level];
+}
+// Two fixed lines in every closed card: live site + Claude, then numbers (and the problem, if any).
 function miniLine(p) {
   const m = el('div', 'mini');
   const b = p.box;
-  if (b && b.running === false) m.append(el('span', 'warned', 'gestoppt'));
+  const l1 = el('div', 'mini-l');
+  l1.append(siteChip(p));
+  if (b && b.running === false) l1.append(el('span', 'warned', 'gestoppt'));
   if (b && b.claude && b.claude.state) {
     const c = el('span', 'cl ' + b.claude.state);
     c.append(el('span', 'cdot'), el('span', null, CLAUDE_STATE[b.claude.state]));
-    m.append(c);
+    l1.append(c);
   }
-  if (tokensOut(p)) m.append(el('span', 'num', compact(tokensOut(p)) + ' Output'));
-  if (b && b.stats) m.append(el('span', 'num', 'RAM ' + Math.round(b.stats.mem_pct) + ' %'));
-  if (p.repo && p.repo.prs.length) m.append(el('span', 'num', p.repo.prs.length + ' PR' + (p.repo.prs.length > 1 ? 's' : '')));
-  if (b && (b.oom_killed || b.restarts > 0)) m.append(el('span', 'warned', 'Neustart'));
+  const l2 = el('div', 'mini-l');
+  if (tokensOut(p)) l2.append(el('span', 'num', compact(tokensOut(p)) + ' Output'));
+  if (b && b.stats) l2.append(el('span', 'num', 'RAM ' + Math.round(b.stats.mem_pct) + ' %'));
+  if (p.repo && p.repo.prs.length) l2.append(el('span', 'num', p.repo.prs.length + ' PR' + (p.repo.prs.length > 1 ? 's' : '')));
+  if (b && (b.oom_killed || b.restarts > 0)) l2.append(el('span', 'warned', 'Neustart'));
+  const prob = problemText(p);
+  if (prob) l2.append(el('span', 'prob ' + p.level, prob));
+  m.append(l1, l2);
   return m;
 }
 function collapsible(card, p) {
